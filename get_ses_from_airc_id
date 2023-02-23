@@ -1,0 +1,15 @@
+#!/bin/bash
+
+airc_id=$1
+
+airc_id_number=`echo ${airc_id} | sed 's/3tb//g'`
+
+if [[ ${airc_id_number} < 4188 ]]; then 
+    ses="1"
+elif [[ ${airc_id_number} > 4188 ]] && [[ ${airc_id_number} < 8000 ]]; then
+    ses="2"
+elif [[ ${airc_id_number} > 8000 ]]; then
+    ses="3"
+fi
+
+echo ${ses}

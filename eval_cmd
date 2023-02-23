@@ -1,0 +1,94 @@
+#!/bin/bash
+ 
+# ------------------------------------------------------------------------------
+# usage
+# ------------------------------------------------------------------------------
+usage() {
+
+    cat <<USAGE
+    
+    Usage: $0 [options]
+
+    Options:
+        -c, -cmd <cmd>              
+            command to execute (required)
+
+        -o, --out_path <out_path>
+            output path (required)
+
+        --overwrite <0|1>
+            flag to overwrite output (default: 0/false)
+
+        --p, --print <0|1>
+            flag to print command (default: 0/false)
+                only print, but not run the command for debugging purposes
+
+        -h, --help
+            show this help message and exit
+        
+USAGE
+    exit 1
+}
+
+# ------------------------------------------------------------------------------
+# parse usage
+# ------------------------------------------------------------------------------
+if [ $# -eq 0 ]; then
+        usage
+    fi
+
+# default values
+overwrite=0
+print=0
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -c|-cmd)
+            cmd=$2
+            shift 2
+            ;;
+        -o|--out_path) 
+            out_path=$2
+            shift 2
+            ;;
+        -p|--print)
+            print=$2
+            shift 2
+            ;;
+        --overwrite)
+            overwrite=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            usage
+            ;;
+    esac
+done
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+echo -e "\ncommand:\n${cmd}\n"
+if [[ ${print} -eq 1 ]]; then
+    echo "warning: printing, but not running command"
+    exit 0
+fi
+
+if [[ -f ${out_path} ]] && [[ ${overwrite} -eq 0 ]]; then
+    echo "warning: skipping, file already exists and overwrite set to 0 (${out_path})"
+elif [[ -f ${out_path} ]] && [[ ${overwrite} -eq 1 ]]; then
+    echo "warning: overwriting, file already exists and overwrite set to 1 (${out_path})"
+    rm ${out_path}
+    eval ${cmd}
+elif [[ ! -f ${out_path} ]]; then
+    eval ${cmd}
+fi
+
+if [[ ! -f ${out_path} ]]; then
+    echo "error: output file not generated (${out_path})"
+    exit 1
+fi

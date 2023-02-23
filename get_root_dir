@@ -1,0 +1,15 @@
+#!/bin/bash
+
+os=`uname`
+if [ "${os}" = "Darwin" ]; then
+    root_dir='/Volumes'
+elif [[ "${os}" = "Linux" ]]; then
+    if [[ ${HOSTNAME} == 'cvlkrcompute1.utdallas.edu' ]] || [[ ${HOSTNAME} == 'cvlkrcompute2.utdallas.edu' ]]; then
+        root_dir='/raid/data'
+    elif [[ ${HOSTNAME} == 'login-01' ]]; then
+        root_dir='/mfs/cvl/groups/kenrod'
+    fi
+elif [ "${os}" = "Windows_NT" ]; then
+    root_dir='/'
+fi
+echo ${root_dir}

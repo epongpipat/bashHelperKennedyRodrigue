@@ -1,0 +1,4 @@
+#!/bin/bash
+
+duration=$1
+echo `printf '%d:%02d:%02d:%02d\n' $(($duration/86400)) $(($duration%86400/3600)) $(($duration%3600/60)) $(($duration%60))`
