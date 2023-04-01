@@ -42,8 +42,8 @@ usage() {
                 1. ponyo
                 2. totoro
 
-        --sge_wd <path>         (optional)
-            path to working directory for SGE
+        --sge_flags <str>         (optional)
+            additional flags/options to pass to SGE
 
         --print <0|1>           (optional)
             print commands to screen only (default: 0)
@@ -135,8 +135,8 @@ while [[ $# -gt 0 ]]; do
             sge_server=$2
             shift 2
             ;;
-        --sge_wd)
-            sge_wd=$2
+        --sge_flags)
+            sge_flags=$2
             shift 2
             ;;
         --print)
@@ -327,8 +327,8 @@ if [[ ${sge} -eq 1 ]]; then
                 sge_opts="${sge_opts} -q all.q@cvlkrcompute2.utdallas.edu"
             fi
 
-            if [[ ! -z ${sge_wd} ]]; then
-                sge_opts="${sge_opts} -wd ${sge_wd}"
+            if [[ ! -z ${sge_flags} ]]; then
+                sge_opts="${sge_opts} ${sge_flags}"
             fi
 
             # sge job limit
