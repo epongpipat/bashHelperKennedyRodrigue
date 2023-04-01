@@ -1,0 +1,56 @@
+#!/bin/bash
+
+sub=$1
+ses=$2
+
+# ------------------------------------------------------------------------------
+# check for input
+# ------------------------------------------------------------------------------
+if [[ -z ${sub} ]]; then
+    echo "ERROR: sub is a required argument"
+    echo "   USAGE: ${0} <sub> <ses>"
+    exit 1
+fi
+
+if [[ -z ${ses} ]]; then
+    echo "ERROR: ses is a required argument"
+    echo "   USAGE: ${0} <sub> <ses>"
+    exit 1
+fi
+
+if [[ ${ses} -lt 1 ]]; then 
+    echo "ERROR: ses must be greater than 0"
+    echo "   USAGE: ${0} <sub> <ses>"
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
+# paths
+# ------------------------------------------------------------------------------
+module load bashHelperKennedyRodrigue/0.0.1
+root_dir=`get_root_dir`
+in_ids='${root_dir}/shared/incoming/ids_long-format.csv'
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+cmd="cat ${in_ids} | awk -F, '\$2==${sub}' | awk -F, '\$3==${ses}' | awk -F, '{print \$1}'"
+airc_ids=(`eval ${cmd}`)
+
+# remove quotes
+for ((i=0; i<${#airc_ids[@]}; i++)); do
+    airc_ids[$i]=`echo ${airc_ids[$i]} | sed 's/\"//g'`
+done
+
+# checks
+if [[ ${#airc_ids[@]} -eq 0 ]]; then
+    >&2 echo "ERROR: no airc ids found for sub-${sub} and ses-${ses}"
+    exit 1
+fi
+
+if [[ ${#airc_ids[@]} -gt 1 ]]; then
+    >&2 echo "WARNING: multiple airc ids found for sub-${sub} and ses-${ses}"
+fi
+
+# print
+echo ${airc_ids[@]}
