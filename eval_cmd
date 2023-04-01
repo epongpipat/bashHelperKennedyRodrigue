@@ -19,7 +19,7 @@ usage() {
         --overwrite <0|1>
             flag to overwrite output (default: 0/false)
 
-        --p, --print <0|1>
+        -p, --print <0|1>
             flag to print command (default: 0/false)
                 only print, but not run the command for debugging purposes
 

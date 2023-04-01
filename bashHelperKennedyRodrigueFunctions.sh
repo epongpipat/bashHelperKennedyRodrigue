@@ -40,25 +40,30 @@ parse_args() {
 
     # default values
     overwrite=0
-
+    opts=""
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --sub)
                 sub=$2
+                opts="${opts} --sub ${sub}"
                 shift 2
                 ;;
             --ses)
                 wave=$2
                 ses=`printf "%02d" ${wave}`
+                opts="${opts} --ses ${ses}"
                 shift 2
                 ;;
             --airc_id)
                 airc_id=$2
+                airc_id_number=`echo ${airc_id} | sed 's/3tb//g'`
+                opts="${opts} --airc_id ${airc_id}"
                 shift 2
                 ;;
             --overwrite)
                 overwrite=$2
+                opts="${opts} --overwrite ${overwrite}"
                 shift 2
                 ;;
             -h|--help)
