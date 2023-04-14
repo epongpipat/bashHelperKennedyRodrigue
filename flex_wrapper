@@ -282,7 +282,7 @@ if [[ ${sge} -eq 0 ]]; then
             sub=`echo ${id} | awk -F, '{print $2}'`
             ses=`echo ${id} | awk -F, '{print $3}'`
             opts="--airc_id ${airc_id} --sub ${sub} --ses ${ses} --overwrite ${overwrite}"
-            cmd="bash ${in_scripts[${s}]} ${opts}"
+            cmd="bash ${scripts[${s}]} ${opts}"
             echo -e "command:\n${cmd}"
             if [[ ${print} -eq 0 ]]; then
                 eval ${cmd}
@@ -312,7 +312,7 @@ if [[ ${sge} -eq 1 ]]; then
 
             opts="--airc_id ${airc_id} --sub ${sub} --ses ${ses} --overwrite ${overwrite}"
             
-            script_name=`basename ${in_scripts[${s}]} | sed 's/.sh//'`
+            script_name=`basename ${scripts[${s}]} | sed 's/.sh//'`
             job_name="sub-${sub}_ses-${ses}_script-${script_name}"
             # job_name="${script_name}"
 
@@ -336,7 +336,7 @@ if [[ ${sge} -eq 1 ]]; then
                 sge_opts="${sge_opts} -hold_jid ${job_id_list[$((c - sge_job_limit))]}"
             fi
 
-            cmd="qsub ${sge_opts} ${in_scripts[$s]} ${opts}"
+            cmd="qsub ${sge_opts} ${scripts[$s]} ${opts}"
         
             echo -e "command:\n${cmd}"
             if [[ ${print} -eq 0 ]]; then
