@@ -10,6 +10,9 @@ usage() {
     Usage: $0 [options]
 
     Options:
+        --study <study> 
+            study id (required if available)
+
         --sub <sub>
             subject id (required if available)
 
@@ -18,6 +21,12 @@ usage() {
 
         --airc_id <airc_id>    
             airc id (required if available)
+
+        -r, --data_ref <reference>
+            reference id (required if available)
+
+        --date <YYYYMMDD>
+            date (required if available)
 
         --overwrite <0|1>
             flag to overwrite output (default: 0/false)
@@ -44,6 +53,11 @@ parse_args() {
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --study)
+                study=$2
+                opts="${opts} --study ${study}"
+                shift 2
+                ;;
             --sub)
                 sub=$2
                 opts="${opts} --sub ${sub}"
@@ -59,6 +73,11 @@ parse_args() {
                 airc_id=$2
                 airc_id_number=`echo ${airc_id} | sed 's/3tb//g'`
                 opts="${opts} --airc_id ${airc_id}"
+                shift 2
+                ;;
+            -r|--data_ref)
+                data_ref=$2
+                opts="${opts} --data_ref ${data_ref}"
                 shift 2
                 ;;
             --overwrite)
@@ -87,8 +106,15 @@ print_header() {
     echo "user:     ${USER}"
     echo "host:     ${HOSTNAME}"
     echo ""
-    echo "sub:      ${sub}"
-    echo "ses:      ${ses}"
+    if [[ ! -z ${study} ]]; then
+        echo "study:      ${study}"
+    fi
+    if [[ ! -z ${sub} ]]; then
+        echo "sub:      ${sub}"
+    fi
+    if [[ ! -z ${ses} ]]; then
+        echo "ses:      ${ses}"
+    fi
     echo ""
     SECONDS=0
 }
@@ -103,8 +129,15 @@ print_footer() {
     echo "user:     ${USER}"
     echo "host:     ${HOSTNAME}"
     echo ""
-    echo "sub:      ${sub}"
-    echo "ses:      ${ses}"
+    if [[ ! -z ${study} ]]; then
+        echo "study:      ${study}"
+    fi
+    if [[ ! -z ${sub} ]]; then
+        echo "sub:      ${sub}"
+    fi
+    if [[ ! -z ${ses} ]]; then
+        echo "ses:      ${ses}"
+    fi
     echo ""
     echo "duration: `get_duration ${SECONDS}`"
     echo ""
