@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# usage
+# ------------------------------------------------------------------------------
+usage() {
+    cat <<USAGE
+
+    Usage: $0 <in_paths>
+
+    Description:
+
+        Check if input paths exist. in_paths can be a single path or an array of paths
+
+USAGE
+    exit 1
+}
+
+# ------------------------------------------------------------------------------
+# parse args
+# ------------------------------------------------------------------------------
+# if no arguments supplied, show usage
+if [ $# -eq 0 ]; then
+    usage
+fi
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+in_paths=($@)
+# echo "in_paths: ${in_paths[@]}"
+for key in "${!in_paths[@]}"; do
+    if [[ ! -e "${in_paths[$key]}" ]]; then
+        echo "error: file does not exist (${key}: ${in_paths[$key]})"
+        exit 1
+    fi
+done
+
