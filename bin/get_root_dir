@@ -1,15 +1,81 @@
 #!/bin/bash
 
-os=`uname`
-if [ "${os}" = "Darwin" ]; then
-    root_dir='/Volumes'
-elif [[ "${os}" = "Linux" ]]; then
-    if [[ ${HOSTNAME} == 'cvlkrcompute1.utdallas.edu' ]] || [[ ${HOSTNAME} == 'cvlkrcompute2.utdallas.edu' ]]; then
-        root_dir='/raid/data'
-    elif [[ ${HOSTNAME} == 'login-01' ]]; then
-        root_dir='/mfs/cvl/groups/kenrod'
-    fi
-elif [ "${os}" = "Windows_NT" ]; then
-    root_dir='/'
+# ------------------------------------------------------------------------------
+# usage
+# ------------------------------------------------------------------------------
+usage() {
+    cat <<USAGE
+
+    Usage: $0 <dir>
+
+    Description:
+
+        Get root directory based on OS and hostname
+
+    Options:
+
+        <dir>
+            directory name. can be one of the following:
+                kmk
+                kmr
+                kenrod
+
+
+        -h, --help
+            show this help message and exit
+
+USAGE
+    exit 1
+}
+
+# ------------------------------------------------------------------------------
+# parse args
+# ------------------------------------------------------------------------------
+# if no arguments supplied, show usage
+if [ $# -eq 0 ]; then
+    usage
 fi
-echo ${root_dir}
+
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+    usage
+fi
+
+dir_list=(kmk kmr kenrod)
+if [[ ! " ${dir_list[@]} " =~ " $1 " ]]; then
+    echo "error: unknown argument ($1)"
+    usage
+fi
+
+dir=$1
+# while [[ $# -gt 0 ]]; do
+
+#     # if [[ $# -eq 0 ]]; then
+#     #     usage
+#     # fi
+
+#     case "$1" in
+#         -h|--help)
+#             usage
+#             shift 2
+#             ;;
+#         *)
+#             if [[ ! " ${dir_list[@]} " =~ " $1 " ]]; then
+#                 echo "error: unknown argument ($1)"
+#                 usage
+#             else
+#                 dir=$1
+#             fi
+#             shift 2
+#             ;;
+#     esac
+# done
+
+# echo "dir: ${dir}"
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+os=`uname`
+code_dir=`dirname $0`
+root_dir=`cat ${code_dir}/root_dir.csv | grep ${dir} | grep ${os} | grep ${HOSTNAME} | awk -F, '{print $4}'`
+echo "${root_dir}"

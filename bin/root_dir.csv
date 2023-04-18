@@ -1,0 +1,16 @@
+os,hostname,dir,path
+Linux,cvlkrcompute1.utdallas.edu,kmk,/cvl/kennedy
+Linux,cvlkrcompute1.utdallas.edu,kmr,/cvl/rodrigue
+Linux,cvlkrcompute1.utdallas.edu,kenrod,/cvl/kenrod
+Linux,cvlkrcompute2.utdallas.edu,kmk,/cvl/kennedy
+Linux,cvlkrcompute2.utdallas.edu,kmr,/cvl/rodrigue
+Linux,cvlkrcompute2.utdallas.edu,kenrod,/cvl/kenrod
+Linux,login-01,kmk,/mfs/cvl/groups/kennedy
+Linux,login-01,kmr,/mfs/cvl/groups/rodrigue
+Linux,login-01,kenrod,/mfs/cvl/groups/kenrod
+Darwin,local,kmk,/Volumes/kennedy
+Darwin,local,kmr,/Volumes/rodrigue
+Darwin,local,kenrod,/Volumes/kenrod
+Windows_NT,local,kmk,//smb.cvl.utdallas.edu/kennedy
+Windows_NT,local,kmr,//smb.cvl.utdallas.edu/rodrigue
+Windows_NT,local,kenrod,//smb.cvl.utdallas.edu/kenrod
