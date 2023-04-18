@@ -2,9 +2,9 @@
 
 airc_id=$1
 
-root_dir=`get_root_dir`
+root_dir=`get_root_dir kenrod`
 
-sub=`cat ${root_dir}/shared/incoming/ids_long-format.csv | grep ${airc_id} | awk -F ',' '{print $2}'`
+sub=`cat ${root_dir}/incoming/ids_long-format.csv | grep ${airc_id} | awk -F ',' '{print $2}'`
 
 echo ${sub}
 

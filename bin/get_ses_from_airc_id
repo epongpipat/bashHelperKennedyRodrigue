@@ -2,17 +2,9 @@
 
 airc_id=$1
 
-# airc_id_number=`echo ${airc_id} | sed 's/3tb//g'`
+root_dir=`get_root_dir kenrod`
 
-# if [[ ${airc_id_number} < 4188 ]]; then 
-#     ses="1"
-# elif [[ ${airc_id_number} > 4188 ]] && [[ ${airc_id_number} < 8000 ]]; then
-#     ses="2"
-# elif [[ ${airc_id_number} > 8000 ]]; then
-#     ses="3"
-# fi
-
-ses=`cat ${root_dir}/shared/incoming/ids_long-format.csv | grep ${airc_id} | awk -F ',' '{print $3}'`
+ses=`cat ${root_dir}/incoming/ids_long-format.csv | grep ${airc_id} | awk -F ',' '{print $3}'`
 
 if [[ -z ${ses} ]] || [[ ${ses} == 'NA' ]]; then
     echo "error: session/wave could not be found for ${airc_id}" 1>&2

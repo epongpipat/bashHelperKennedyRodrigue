@@ -28,8 +28,8 @@ fi
 # paths
 # ------------------------------------------------------------------------------
 module load bashHelperKennedyRodrigue/0.0.1
-root_dir=`get_root_dir`
-in_ids='${root_dir}/shared/incoming/ids_long-format.csv'
+root_dir=`get_root_dir kenrod`
+in_ids='${root_dir}/incoming/ids_long-format.csv'
 
 # ------------------------------------------------------------------------------
 # main
