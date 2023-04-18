@@ -53,5 +53,9 @@ dir=$1
 # ------------------------------------------------------------------------------
 os=`uname`
 code_dir=`dirname $0`
-root_dir=`cat ${code_dir}/root_dir.csv | grep ${dir} | grep ${os} | grep ${HOSTNAME} | awk -F, '{print $4}'`
+if [[ ${os} == 'Linux' ]]; then
+    root_dir=`cat ${code_dir}/root_dir.csv | grep ${dir} | grep ${os} | grep ${HOSTNAME} | awk -F, '{print $4}'`
+elif [[ ${os} == 'Darwin' ]] || [[ ${os} == 'Windows_NT' ]]; then
+    root_dir=`cat ${code_dir}/root_dir.csv | grep ${dir} | grep ${os} | awk -F, '{print $4}'`
+fi
 echo "${root_dir}"
