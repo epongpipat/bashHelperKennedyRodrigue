@@ -47,30 +47,6 @@ if [[ ! " ${dir_list[@]} " =~ " $1 " ]]; then
 fi
 
 dir=$1
-# while [[ $# -gt 0 ]]; do
-
-#     # if [[ $# -eq 0 ]]; then
-#     #     usage
-#     # fi
-
-#     case "$1" in
-#         -h|--help)
-#             usage
-#             shift 2
-#             ;;
-#         *)
-#             if [[ ! " ${dir_list[@]} " =~ " $1 " ]]; then
-#                 echo "error: unknown argument ($1)"
-#                 usage
-#             else
-#                 dir=$1
-#             fi
-#             shift 2
-#             ;;
-#     esac
-# done
-
-# echo "dir: ${dir}"
 
 # ------------------------------------------------------------------------------
 # main
