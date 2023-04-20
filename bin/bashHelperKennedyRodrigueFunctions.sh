@@ -18,6 +18,9 @@ usage() {
 
         --ses <1|2|3> 
             wave (required if available)
+        
+        --run <run>
+            run id (required if available)
 
         --airc_id <airc_id>    
             airc id (required if available)
@@ -69,6 +72,11 @@ parse_args() {
                 opts="${opts} --ses ${ses}"
                 shift 2
                 ;;
+            --run)
+                run=$2
+                opts="${opts} --run ${run}"
+                shift 2
+                ;;
             --airc_id)
                 airc_id=$2
                 airc_id_number=`echo ${airc_id} | sed 's/3tb//g'`
@@ -78,6 +86,11 @@ parse_args() {
             -r|--data_ref)
                 data_ref=$2
                 opts="${opts} --data_ref ${data_ref}"
+                shift 2
+                ;;
+            --date)
+                date=$2
+                opts="${opts} --date ${date}"
                 shift 2
                 ;;
             --overwrite)
@@ -93,6 +106,20 @@ parse_args() {
                 usage
                 ;;
         esac
+    done
+}
+
+# ------------------------------------------------------------------------------
+# check required arguments
+# ------------------------------------------------------------------------------
+check_req_args() {
+    # check args
+    args=("$@")
+    for arg in "${args[@]}"; do
+        if [[ -z ${!arg} ]]; then
+            echo "error: missing argument (${arg})"
+            exit 1
+        fi
     done
 }
 
@@ -114,6 +141,9 @@ print_header() {
     fi
     if [[ ! -z ${ses} ]]; then
         echo "ses:      ${ses}"
+    fi
+    if [[ ! -z ${run} ]]; then
+        echo "run:      ${run}"
     fi
     echo ""
     SECONDS=0
@@ -137,6 +167,9 @@ print_footer() {
     fi
     if [[ ! -z ${ses} ]]; then
         echo "ses:      ${ses}"
+    fi
+    if [[ ! -z ${run} ]]; then
+        echo "run:      ${run}"
     fi
     echo ""
     echo "duration: `get_duration ${SECONDS}`"
