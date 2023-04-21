@@ -25,7 +25,7 @@ usage() {
         --airc_id <airc_id>    
             airc id (required if available)
 
-        -r, --data_ref <reference>
+        --data_ref <reference>
             reference id (required if available)
 
         --date <YYYYMMDD>
@@ -83,7 +83,7 @@ parse_args() {
                 opts="${opts} --airc_id ${airc_id}"
                 shift 2
                 ;;
-            -r|--data_ref)
+            --data_ref)
                 data_ref=$2
                 opts="${opts} --data_ref ${data_ref}"
                 shift 2

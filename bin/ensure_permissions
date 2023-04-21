@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# usage
+# ------------------------------------------------------------------------------
+usage() {
+    cat <<USAGE
+    
+    Usage: $0 <path>
+
+        path can be a file or directory
+
+    Description:
+
+        ensures the following:
+            - directories:  chmod 2775 permissions
+            - files:        chmod 0774 permissions
+            - group:        if group ownership is kenrod, then changes to kenrodbasic or kenrodusers depending on group membership
+
+USAGE
+exit 1
+}
+
+# ------------------------------------------------------------------------------
+# args
+# ------------------------------------------------------------------------------
+if [[ $# -lt 1 ]]; then
+    usage
+fi
+
+path=$1
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+find ${path} -type d -exec chmod 2775 {} \;
+find ${path} -type f -exec chmod 0774 {} \;
+
+grp=`ls -ld ${path} | awk '{print $4}'`
+
+group_list=`groups`
+if [[ ${group_list} =~ "kenrodusers" ]]; then
+    max_grp="kenrodusers"
+elif [[ ${group_list} =~ "kenrodbasic" ]]; then
+    max_grp="kenrodbasic"
+fi
+
+if [[ ${grp} == "kenrod" ]]; then
+    chgrp -R ${max_grp} ${path}
+fi
