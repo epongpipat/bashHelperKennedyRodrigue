@@ -1,5 +1,9 @@
 #!/bin/bash
 
+red='\e[31m'
+yellow='\e[33m'
+nocolor='\e[39m'
+
 # ------------------------------------------------------------------------------
 # usage function
 # ------------------------------------------------------------------------------
@@ -117,7 +121,7 @@ check_req_args() {
     args=("$@")
     for arg in "${args[@]}"; do
         if [[ -z ${!arg} ]]; then
-            echo "error: missing argument (${arg})"
+            echo -e "${red}error${nocolor}: missing argument (${arg})"
             exit 1
         fi
     done
@@ -134,7 +138,7 @@ print_header() {
     echo "host:     ${HOSTNAME}"
     echo ""
     if [[ ! -z ${study} ]]; then
-        echo "study:      ${study}"
+        echo "study:    ${study}"
     fi
     if [[ ! -z ${sub} ]]; then
         echo "sub:      ${sub}"
@@ -160,7 +164,7 @@ print_footer() {
     echo "host:     ${HOSTNAME}"
     echo ""
     if [[ ! -z ${study} ]]; then
-        echo "study:      ${study}"
+        echo "study:    ${study}"
     fi
     if [[ ! -z ${sub} ]]; then
         echo "sub:      ${sub}"
