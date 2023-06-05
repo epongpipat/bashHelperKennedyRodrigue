@@ -26,10 +26,10 @@ usage() {
         --run <run>
             run id (required if available)
 
-        --airc_id <airc_id>    
+        --airc_id, --airc-id <airc_id>    
             airc id (required if available)
 
-        --data_ref <reference>
+        --data_ref, --data-ref <reference>
             reference id (required if available)
 
         --date <YYYYMMDD>
@@ -81,13 +81,13 @@ parse_args() {
                 opts="${opts} --run ${run}"
                 shift 2
                 ;;
-            --airc_id)
+            --airc_id|--airc-id)
                 airc_id=$2
                 airc_id_number=`echo ${airc_id} | sed 's/3tb//g'`
                 opts="${opts} --airc_id ${airc_id}"
                 shift 2
                 ;;
-            --data_ref)
+            --data_ref|--data-ref)
                 data_ref=$2
                 opts="${opts} --data_ref ${data_ref}"
                 shift 2
