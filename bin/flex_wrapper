@@ -86,10 +86,10 @@ usage_ids_idx() {
 # default args
 # ------------------------------------------------------------------------------
 # ids_idx=1
-sge=0
+parallel=0
+parallel_job_limit=0
 print=0
 sge_server=0
-sge_job_limit=0
 test=0
 overwrite=0
 color_red='\033[0;31m'
