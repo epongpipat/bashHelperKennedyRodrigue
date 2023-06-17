@@ -1,8 +1,7 @@
 #!/bin/bash
 
-red='\e[31m'
-yellow='\e[33m'
-nocolor='\e[39m'
+set -e
+
 
 # ------------------------------------------------------------------------------
 # usage function
@@ -23,6 +22,9 @@ usage() {
         --ses <1|2|3> 
             wave (required if available)
         
+        --task <task>
+            task (required if available)
+
         --run <run>
             run id (required if available)
 
@@ -42,7 +44,7 @@ usage() {
             show this help message and exit
         
 USAGE
-    exit 1
+    # exit 1
 }
 
 # ------------------------------------------------------------------------------
@@ -52,6 +54,7 @@ parse_args() {
     # if no arguments supplied, show usage
     if [ $# -eq 0 ]; then
         usage
+        exit 1
     fi
 
     # default values
@@ -74,6 +77,11 @@ parse_args() {
                 wave=$2
                 ses=`printf "%02d" ${wave}`
                 opts="${opts} --ses ${ses}"
+                shift 2
+                ;;
+            --task)
+                task=$2
+                opts="${opts} --task ${task}"
                 shift 2
                 ;;
             --run)
@@ -104,26 +112,13 @@ parse_args() {
                 ;;
             -h|--help)
                 usage
+                exit 0
                 ;;
             *)
-                echo "Unknown argument: $1"
                 usage
+                bash error_msg "unknown argument: $1"
                 ;;
         esac
-    done
-}
-
-# ------------------------------------------------------------------------------
-# check required arguments
-# ------------------------------------------------------------------------------
-check_req_args() {
-    # check args
-    args=("$@")
-    for arg in "${args[@]}"; do
-        if [[ -z ${!arg} ]]; then
-            echo -e "${red}error${nocolor}: missing argument (${arg})"
-            exit 1
-        fi
     done
 }
 

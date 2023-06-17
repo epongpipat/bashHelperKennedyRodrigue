@@ -7,21 +7,24 @@ ses=$2
 # check for input
 # ------------------------------------------------------------------------------
 if [[ -z ${sub} ]]; then
-    echo "ERROR: sub is a required argument"
-    echo "   USAGE: ${0} <sub> <ses>"
-    exit 1
+    # echo "ERROR: sub is a required argument"
+    # echo "   USAGE: ${0} <sub> <ses>"
+    # exit 1
+    bash error_msg "sub is a required argument\n\tUSAGE: ${0} <sub> <ses>"
 fi
 
 if [[ -z ${ses} ]]; then
-    echo "ERROR: ses is a required argument"
-    echo "   USAGE: ${0} <sub> <ses>"
-    exit 1
+    # echo "ERROR: ses is a required argument"
+    # echo "   USAGE: ${0} <sub> <ses>"
+    # exit 1
+    bash error_msg "ses is a required argument\n\tUSAGE: ${0} <sub> <ses>"
 fi
 
 if [[ ${ses} -lt 1 ]]; then 
-    echo "ERROR: ses must be greater than 0"
-    echo "   USAGE: ${0} <sub> <ses>"
-    exit 1
+    # echo "ERROR: ses must be greater than 0"
+    # echo "   USAGE: ${0} <sub> <ses>"
+    # exit 1
+    bash error_msg "ses must be greater than 0\n\tUSAGE: ${0} <sub> <ses>"
 fi
 
 # ------------------------------------------------------------------------------
@@ -44,12 +47,14 @@ done
 
 # checks
 if [[ ${#airc_ids[@]} -eq 0 ]]; then
-    >&2 echo "ERROR: no airc ids found for sub-${sub} and ses-${ses}"
-    exit 1
+    # >&2 echo "ERROR: no airc ids found for sub-${sub} and ses-${ses}"
+    # exit 1
+    bash error_msg "no airc ids found for sub-${sub} and ses-${ses}"
 fi
 
 if [[ ${#airc_ids[@]} -gt 1 ]]; then
-    >&2 echo "WARNING: multiple airc ids found for sub-${sub} and ses-${ses}"
+    # >&2 echo "WARNING: multiple airc ids found for sub-${sub} and ses-${ses}"
+    bash warning_msg "multiple airc ids found for sub-${sub} and ses-${ses}"
 fi
 
 # print

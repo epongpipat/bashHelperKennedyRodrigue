@@ -1,8 +1,8 @@
 #!/bin/bash
 
-red='\e[31m'
-yellow='\e[33m'
-nocolor='\e[39m'
+# red='\e[31m'
+# yellow='\e[33m'
+# nocolor='\e[39m'
 
 # ------------------------------------------------------------------------------
 # usage
@@ -32,11 +32,9 @@ fi
 # main
 # ------------------------------------------------------------------------------
 in_paths=($@)
-# echo "in_paths: ${in_paths[@]}"
 for key in "${!in_paths[@]}"; do
     if [[ ! -e "${in_paths[$key]}" ]]; then
-        echo -e "${red}error${nocolor}: file does not exist (${key}: ${in_paths[$key]})"
-        exit 1
+        bash error_msg "file does not exist (${key}: ${in_paths[$key]})"
     fi
 done
 

@@ -3,6 +3,6 @@
 args=("$@")
 for arg in "${args[@]}"; do
     if [[ -z ${!arg} ]]; then
-        error_msg "missing argument (${arg})"
+        bash error_msg "missing argument (${arg})"
     fi
 done

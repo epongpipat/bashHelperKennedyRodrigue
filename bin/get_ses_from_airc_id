@@ -8,8 +8,9 @@ root_dir=`${code_dir}/get_root_dir kenrod`
 ses=`cat ${root_dir}/incoming/ids_long-format.csv | grep ${airc_id} | awk -F ',' '{print $3}'`
 
 if [[ -z ${ses} ]] || [[ ${ses} == 'NA' ]]; then
-    echo "error: session/wave could not be found for ${airc_id}" 1>&2
-    exit 1
+    # echo "error: session/wave could not be found for ${airc_id}" 1>&2
+    # exit 1
+    bash error_msg "session/wave could not be found for ${airc_id}"
 fi
 
 echo ${ses}
