@@ -1,0 +1,8 @@
+#!/bin/bash
+
+color_red='\e[31m'
+color_yellow='\e[33m'
+color_default='\e[39m'
+
+echo -e "${color_red}error${color_default}: ${@}" 1>&2
+exit 1
