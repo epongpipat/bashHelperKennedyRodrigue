@@ -65,6 +65,8 @@ parse_args() {
 
     # default values
     overwrite=0
+    print=0
+    
     opts=""
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
