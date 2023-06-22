@@ -78,14 +78,17 @@ done
 # ------------------------------------------------------------------------------
 echo -e "\ncommand:\n${cmd}\n"
 if [[ ${print} -eq 1 ]]; then
-    echo -e "${yellow}warning${nocolor}: printing, but not running command"
-    exit 0
+    warning_msg "printing, but not running command"
 fi
 
-if [[ -f ${out_path} ]] && [[ ${overwrite} -eq 0 ]]; then
-    echo -e "${yellow}warning${nocolor}: skipping, file already exists and overwrite set to 0 (${out_path})"
+if [[ -f ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ -s ${out_path} ]]; then
+    bash warning_msg "skipping, file already exists and overwrite set to 0"
+elif [[ -f ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ ! -s ${out_path} ]]; then
+    bash warning_msg "overwriting, file already exists and overwrite set to 0, but file is empty"
+    rm ${out_path}
+    eval ${cmd}
 elif [[ -f ${out_path} ]] && [[ ${overwrite} -eq 1 ]]; then
-    echo -e "${yellow}warning${nocolor}: overwriting, file already exists and overwrite set to 1 (${out_path})"
+    bash warning_msg "overwriting, file already exists and overwrite set to 1"
     rm ${out_path}
     eval ${cmd}
 elif [[ ! -f ${out_path} ]]; then
@@ -93,6 +96,5 @@ elif [[ ! -f ${out_path} ]]; then
 fi
 
 if [[ ! -f ${out_path} ]]; then
-    echo -e "${red}error${nocolor}: output file not generated (${out_path})"
-    exit 1
+    bash error_msg "output file not generated"
 fi
