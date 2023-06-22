@@ -81,6 +81,7 @@ done
 echo -e "\ncommand:\n${cmd}\n"
 if [[ ${print} -eq 1 ]]; then
     warning_msg "printing, but not running command"
+    exit 0
 fi
 
 if [[ -f ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ -s ${out_path} ]]; then
