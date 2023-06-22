@@ -26,6 +26,9 @@ usage() {
         --run <run>
             run id (required if available)
 
+        --task <task>
+            task name (required if available)
+
         --airc_id, --airc-id <airc_id>    
             airc id (required if available)
 
@@ -79,6 +82,14 @@ parse_args() {
             --run)
                 run=$2
                 opts="${opts} --run ${run}"
+                shift 2
+                ;;
+            --task)
+                task=$2
+                if [[ ${task} == 'nback' ]]; then
+                    task_alt='Nback'
+                fi
+                opts="${opts} --task ${task}"
                 shift 2
                 ;;
             --airc_id|--airc-id)
@@ -146,6 +157,9 @@ print_header() {
     if [[ ! -z ${ses} ]]; then
         echo "ses:      ${ses}"
     fi
+    if [[ ! -z ${task} ]]; then
+        echo "task:     ${task}"
+    fi
     if [[ ! -z ${run} ]]; then
         echo "run:      ${run}"
     fi
@@ -171,6 +185,9 @@ print_footer() {
     fi
     if [[ ! -z ${ses} ]]; then
         echo "ses:      ${ses}"
+    fi
+    if [[ ! -z ${task} ]]; then
+        echo "task:     ${task}"
     fi
     if [[ ! -z ${run} ]]; then
         echo "run:      ${run}"
