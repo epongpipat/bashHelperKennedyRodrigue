@@ -74,10 +74,10 @@ usage_ids_idx() {
     usage_ids_idx="\n\tids_idx:\n"
     ids=(`cat ${in_ids}`)
     # remove header
-    in_ids=("${ids[@]:1}")
-    for i in ${!in_ids[@]}; do
+    ids_all=("${ids[@]:1}")
+    for i in ${!ids_all[@]}; do
         c=`echo ${i} + 1 | bc`
-        usage_ids_idx="${usage_ids_idx}\t\t${c}:\t${in_ids[$i]}\n"
+        usage_ids_idx="${usage_ids_idx}\t\t${c}:\t${ids_all[$i]}\n"
     done
     echo -e ${usage_ids_idx}
 }
@@ -240,16 +240,16 @@ id_cols=(`head -n 1 ${in_ids} | sed 's/,/ /g'`)
 id_cols_alt=`head -n 1 ${in_ids}`
 # echo ${id_cols[@]}
 # exit 1
-in_ids=(`cat ${in_ids}`)
+ids_all=(`cat ${in_ids}`)
 # id_cols=(`awk -F ',' '{print $1}' ${in_ids}`)
 
-if [[ ${#in_ids[@]} -eq 0 ]]; then
-    echo -e "\n${color_red}error${color_default}: no ids found in ${in_ids}"
+if [[ ${#ids_all[@]} -eq 0 ]]; then
+    echo -e "\n${color_red}error${color_default}: no ids found in ${ids_all}"
     exit 1
 fi
 
 if [[ ${ids_idx} == "all" ]]; then
-    ids_idx=(`seq 1 $((${#in_ids[@]} - 1))`)
+    ids_idx=(`seq 1 $((${#ids_all[@]} - 1))`)
 elif [[ ${ids_idx} == *":"* ]]; then
     ids_idx_start=`echo ${ids_idx} | awk -F: '{print $1}'`
     ids_idx_end=`echo ${ids_idx} | awk -F: '{print $2}'`
@@ -265,7 +265,7 @@ fi
 # subset
 declare -a ids
 for i in ${!ids_idx[@]}; do
-    ids[$i]=${in_ids[${ids_idx[$i]}]}
+    ids[$i]=${ids_all[${ids_idx[$i]}]}
 done
 
 echo -e "\nids:"
@@ -322,6 +322,7 @@ fi
 # ------------------------------------------------------------------------------
 # sge_default_opts="-V \
 # -S /bin/bash \
+# -o jid-\$JOB_ID-\$TASK_ID_jname-\$JOB_NAME.log \
 # -j y \
 # -m a \
 # -M ${USER}@utdallas.edu"
