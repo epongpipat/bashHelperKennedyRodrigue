@@ -28,23 +28,25 @@ if [[ $# -lt 1 ]]; then
     usage
 fi
 
-path=$1
+paths=${@}
 
 # ------------------------------------------------------------------------------
 # main
 # ------------------------------------------------------------------------------
-find ${path} -type d -exec chmod 2775 {} \;
-find ${path} -type f -exec chmod 0774 {} \;
+for path in ${paths[@]}; do
+    find ${path} -type d -exec chmod 2775 {} \;
+    find ${path} -type f -exec chmod 0774 {} \;
 
-grp=`ls -ld ${path} | awk '{print $4}'`
+    grp=`ls -ld ${path} | awk '{print $4}'`
 
-group_list=`groups`
-if [[ ${group_list} =~ "kenrodusers" ]]; then
-    max_grp="kenrodusers"
-elif [[ ${group_list} =~ "kenrodbasic" ]]; then
-    max_grp="kenrodbasic"
-fi
+    group_list=`groups`
+    if [[ ${group_list} =~ "kenrodusers" ]]; then
+        max_grp="kenrodusers"
+    elif [[ ${group_list} =~ "kenrodbasic" ]]; then
+        max_grp="kenrodbasic"
+    fi
 
-if [[ ${grp} == "kenrod" ]]; then
-    chgrp -R ${max_grp} ${path}
-fi
+    if [[ ${grp} == "kenrod" ]]; then
+        chgrp -R ${max_grp} ${path}
+    fi
+done

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+args=("$@")
+for arg in "${args[@]}"; do
+    if [[ -z ${!arg} ]]; then
+        bash error_msg "missing argument (${arg})"
+    fi
+done

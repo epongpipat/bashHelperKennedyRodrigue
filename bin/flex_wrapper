@@ -92,9 +92,9 @@ print=0
 sge_server=0
 test=0
 overwrite=0
-color_red='\033[0;31m'
-color_yellow='\033[0;33m'
-color_default='\033[0m'
+# color_red='\033[0;31m'
+# color_yellow='\033[0;33m'
+# color_default='\033[0m'
 
 # ------------------------------------------------------------------------------
 # parse args
@@ -130,8 +130,9 @@ while [[ $# -gt 0 ]]; do
                 shift 2
             else
                 usage
-                echo -e "${color_red}error${color_default}: --parallel must be 0, sge, or slurm"
-                exit 1
+                # echo -e "${color_red}error${color_default}: --parallel must be 0, sge, or slurm"
+                # exit 1
+                bash error_msg "--parallel must be 0, sge, or slurm"
             fi
             ;;
         --parallel_opts|--parallel-opts)
@@ -159,6 +160,7 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
+            usage
             echo "Unknown argument: $1"
             usage
             exit 1
@@ -171,28 +173,32 @@ done
 # ------------------------------------------------------------------------------
 if [[ -z ${in_scripts} ]]; then
     usage
-    echo -e "\n${color_red}error${color_default}: must specify --in_scripts"
-    exit 1
+    # echo -e "\n${color_red}error${color_default}: must specify --in_scripts"
+    # exit 1
+    bash error_msg "must specify --in_scripts"
 fi
 
 if [[ -z ${in_ids} ]]; then
     usage
-    echo -e "\n${color_red}error${color_default}: must specify --in_ids"
-    exit 1
+    # echo -e "\n${color_red}error${color_default}: must specify --in_ids"
+    # exit 1
+    bash error_msg "must specify --in_ids"
 fi
 
 if [[ -z ${scripts_idx} ]]; then
     usage
     usage_scripts_idx
-    echo -e "\n${color_red}error${color_default}: must specify --scripts_idx\n"
-    exit 1
+    # echo -e "\n${color_red}error${color_default}: must specify --scripts_idx\n"
+    # exit 1
+    bash error_msg "must specify --scripts_idx"
 fi
 
 if [[ -z ${ids_idx} ]]; then
     usage
     usage_ids_idx
-    echo -e "\n${color_red}error${color_default}: must specify --ids_idx\n"
-    exit 1
+    # echo -e "\n${color_red}error${color_default}: must specify --ids_idx\n"
+    # exit 1
+    bash error_msg "must specify --ids_idx"
 fi
 
 # ------------------------------------------------------------------------------
@@ -200,8 +206,9 @@ fi
 # ------------------------------------------------------------------------------
 in_scripts=(`cat ${in_scripts}`)
 if [[ ${#in_scripts[@]} -eq 0 ]]; then
-    echo -e "\n${color_red}error${color_default}: no scripts found in ${in_scripts}"
-    exit 1
+    # echo -e "\n${color_red}error${color_default}: no scripts found in ${in_scripts}"
+    # exit 1
+    bash error_msg "no scripts found in ${in_scripts}"
 fi
 
 if [[ ${scripts_idx} == "all" ]]; then
@@ -243,9 +250,10 @@ id_cols_alt=`head -n 1 ${in_ids}`
 ids_all=(`cat ${in_ids}`)
 # id_cols=(`awk -F ',' '{print $1}' ${in_ids}`)
 
-if [[ ${#ids_all[@]} -eq 0 ]]; then
-    echo -e "\n${color_red}error${color_default}: no ids found in ${ids_all}"
-    exit 1
+if [[ ${#in_ids[@]} -eq 0 ]]; then
+    # echo -e "\n${color_red}error${color_default}: no ids found in ${in_ids}"
+    # exit 1
+    bash error_msg "no ids found in ${in_ids}"
 fi
 
 if [[ ${ids_idx} == "all" ]]; then
