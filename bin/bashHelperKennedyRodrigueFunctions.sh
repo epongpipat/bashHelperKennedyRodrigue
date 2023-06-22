@@ -43,6 +43,9 @@ usage() {
         --overwrite <0|1>
             flag to overwrite output (default: 0/false)
 
+        --print <0|1>
+            flag to print command only (does not execute command) (default: 0/false)
+
         -h, --help
             show this help message and exit
         
@@ -119,6 +122,11 @@ parse_args() {
             --overwrite)
                 overwrite=$2
                 opts="${opts} --overwrite ${overwrite}"
+                shift 2
+                ;;
+            --print)
+                print=$2
+                opts="${opts} --print ${print}"
                 shift 2
                 ;;
             -h|--help)
