@@ -147,6 +147,7 @@ parse_args() {
 # check required arguments
 # ------------------------------------------------------------------------------
 check_req_args() {
+    local args=(${@})
     for arg in "${args[@]}"; do
         if [[ -z ${!arg} ]]; then
             bash error_msg "missing argument (${arg})"
