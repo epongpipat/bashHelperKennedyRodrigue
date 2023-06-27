@@ -73,6 +73,7 @@ parse_args() {
         case "$1" in
             --study)
                 study=$2
+                study_uc=`echo ${study} | tr '[:lower:]' '[:upper:]'`
                 opts="${opts} --study ${study}"
                 shift 2
                 ;;
@@ -118,6 +119,12 @@ parse_args() {
                 ;;
             --date)
                 date=$2
+                if [[ ! $date =~ ^[0-9]{8}$ ]]; then
+                    bash error_msg "date must be in the format YYYYMMDD"
+                fi
+                if [[ $date -gt $(date +%Y%m%d) ]]; then
+                    bash error_msg "date must be today's date or a past date"
+                fi
                 opts="${opts} --date ${date}"
                 shift 2
                 ;;
