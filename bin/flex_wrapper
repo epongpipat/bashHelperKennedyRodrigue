@@ -92,6 +92,7 @@ print=0
 sge_server=0
 test=0
 overwrite=0
+set -e
 # color_red='\033[0;31m'
 # color_yellow='\033[0;33m'
 # color_default='\033[0m'
@@ -310,10 +311,10 @@ if [[ ${parallel} == "0" ]]; then
             # ---
             # fixed options
             # ---
-            airc_id=`echo ${id} | awk -F, '{print $1}'`
-            sub=`echo ${id} | awk -F, '{print $2}'`
-            ses=`echo ${id} | awk -F, '{print $3}'`
-            study=`echo ${id} | awk -F, '{print $4}'`
+            study=`echo ${id} | awk -F, '{print $1}'`
+            airc_id=`echo ${id} | awk -F, '{print $2}'`
+            sub=`echo ${id} | awk -F, '{print $3}'`
+            ses=`echo ${id} | awk -F, '{print $4}'`
             opts="--study ${study} --airc_id ${airc_id} --sub ${sub} --ses ${ses} --overwrite ${overwrite}"
             
             cmd="bash ${scripts[${s}]} ${opts}"
@@ -361,10 +362,10 @@ if [[ ${parallel} == 'sge' ]]; then
             # ---
             # fixed options
             # ---
-            airc_id=`echo ${id} | awk -F, '{print $1}'`
-            sub=`echo ${id} | awk -F, '{print $2}'`
-            ses=`echo ${id} | awk -F, '{print $3}'`
-            study=`echo ${id} | awk -F, '{print $4}'`
+            study=`echo ${id} | awk -F, '{print $1}'`
+            airc_id=`echo ${id} | awk -F, '{print $2}'`
+            sub=`echo ${id} | awk -F, '{print $3}'`
+            ses=`echo ${id} | awk -F, '{print $4}'`
             opts="--study ${study} --airc_id ${airc_id} --sub ${sub} --ses ${ses} --overwrite ${overwrite}"
             
             script_name=`basename ${scripts[${s}]} | sed 's/.sh//'`
@@ -438,10 +439,10 @@ if [[ ${parallel} == 'slurm' ]]; then
             # ---
             # fixed options
             # ---
-            airc_id=`echo ${id} | awk -F, '{print $1}'`
-            sub=`echo ${id} | awk -F, '{print $2}'`
-            ses=`echo ${id} | awk -F, '{print $3}'`
-            study=`echo ${id} | awk -F, '{print $4}'`
+            study=`echo ${id} | awk -F, '{print $1}'`
+            airc_id=`echo ${id} | awk -F, '{print $2}'`
+            sub=`echo ${id} | awk -F, '{print $3}'`
+            ses=`echo ${id} | awk -F, '{print $4}'`
             opts="--study ${study} --airc_id ${airc_id} --sub ${sub} --ses ${ses} --overwrite ${overwrite}"
             
             script_name=`basename ${scripts[${s}]} | sed 's/.sh//'`
