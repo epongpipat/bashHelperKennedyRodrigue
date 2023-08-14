@@ -168,25 +168,28 @@ check_req_args() {
 # ------------------------------------------------------------------------------
 print_header() {
     echo ""
-    echo "date:     $(date)"
-    echo "script:   ${0}"
-    echo "user:     ${USER}"
-    echo "host:     ${HOSTNAME}"
+    echo -e "date:\t\t$(date)"
+    echo -e "script:\t\t${0}"
+    echo -e "user:\t\t${USER}"
+    echo -e "host:\t\t${HOSTNAME}"
     echo ""
     if [[ ! -z ${study} ]]; then
-        echo "study:    ${study}"
+        echo -e "study:\t\t${study}"
     fi
     if [[ ! -z ${sub} ]]; then
-        echo "sub:      ${sub}"
+        echo -e "sub:\t\t${sub}"
+    fi
+    if [[ ! -z ${airc_id} ]]; then
+        echo -e "airc id:\t${airc_id}"
     fi
     if [[ ! -z ${ses} ]]; then
-        echo "ses:      ${ses}"
+        echo -e "ses:\t\t${ses}"
     fi
     if [[ ! -z ${task} ]]; then
-        echo "task:     ${task}"
+        echo -e "task:\t\t${task}"
     fi
     if [[ ! -z ${run} ]]; then
-        echo "run:      ${run}"
+        echo -e "run:\t\t${run}"
     fi
     echo ""
     SECONDS=0
@@ -197,27 +200,30 @@ print_header() {
 # ------------------------------------------------------------------------------
 print_footer() {
     echo ""
-    echo "date:     $(date)"
-    echo "script:   ${0}"
-    echo "user:     ${USER}"
-    echo "host:     ${HOSTNAME}"
+    echo -e "date:\t\t$(date)"
+    echo -e "script:\t\t${0}"
+    echo -e "user:\t\t${USER}"
+    echo -e "host:\t\t${HOSTNAME}"
     echo ""
     if [[ ! -z ${study} ]]; then
-        echo "study:    ${study}"
+        echo -e "study:\t\t${study}"
     fi
     if [[ ! -z ${sub} ]]; then
-        echo "sub:      ${sub}"
+        echo -e "sub:\t\t${sub}"
+    fi
+    if [[ ! -z ${airc_id} ]]; then
+        echo -e "airc id:\t${airc_id}"
     fi
     if [[ ! -z ${ses} ]]; then
-        echo "ses:      ${ses}"
+        echo -e "ses:\t\t${ses}"
     fi
     if [[ ! -z ${task} ]]; then
-        echo "task:     ${task}"
+        echo -e "task:\t\t${task}"
     fi
     if [[ ! -z ${run} ]]; then
-        echo "run:      ${run}"
+        echo -e "run:\t\t${run}"
     fi
     echo ""
-    echo "duration: `get_duration ${SECONDS}`"
+    echo -e "duration:\t`get_duration ${SECONDS}`"
     echo ""
 }
