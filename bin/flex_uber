@@ -1,0 +1,165 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# modules
+# ------------------------------------------------------------------------------
+module load bashHelperKennedyRodrigue
+source bashHelperKennedyRodrigueFunctions.sh
+
+# ------------------------------------------------------------------------------
+# opts
+# ------------------------------------------------------------------------------
+set -e
+
+# ------------------------------------------------------------------------------
+# paths
+# ------------------------------------------------------------------------------
+root_dir=`get_root_dir kenrod`
+
+declare -A in_paths
+in_paths[preproc]="${root_dir}/software/scripts/eep170030/scripts.txt"
+in_paths[ids]="${root_dir}/software/scripts/eep170030/ids_long-format.csv"
+
+in_scripts=(`cat ${in_paths[preproc]}`)
+# out_path="/Volumes/kenrod/software/scripts/eep170030/study-pams/mri/flex_uber.sh"
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+
+# script set
+echo -e "\nscript sets:"
+for i in ${!in_scripts[@]}; do
+    echo -e "${i}: ${in_scripts[i]}"
+done
+
+echo -en "\nscript set idx to run?\t"
+valid_script_idx=0
+while [[ ${valid_script_idx} -eq 0 ]]; do
+    read -r scripts_idx
+    if [[ ${scripts_idx} -gt ${#in_scripts[@]} ]]; then
+        warning_msg "not a valid script index (${scripts_idx})"
+        continue
+    elif [[ ${scripts_idx} -lt 0 ]]; then
+        warning_msg "not a valid script index (${scripts_idx})"
+        continue
+    # check if number
+    elif [[ ! ${scripts_idx} =~ ^[0-9]+$ ]]; then
+        warning_msg "not a valid script index (${scripts_idx})"
+        continue
+    fi
+    
+    echo "${scripts_idx}: ${in_scripts[scripts_idx]}"
+    valid_script_idx=1
+done
+
+# script
+echo -e "\nscripts:"
+in_script_set=`eval echo ${in_scripts[scripts_idx]}`
+in_script=(`cat ${in_script_set}`)
+for i in ${!in_script[@]}; do
+    i_str=$((i+1))
+    echo -e "${i_str}: ${in_script[i]}"
+done
+echo -en "\nscript idx to run?\t"
+valid_script_idx=0
+while [[ ${valid_script_idx} -eq 0 ]]; do
+    read -r script_idx
+    if [[ ${script_idx} -gt ${#in_script[@]} ]]; then
+        warning_msg "not a valid script index (${script_idx})"
+        continue
+    elif [[ ${script_idx} -lt 0 ]]; then
+        warning_msg "not a valid script index (${script_idx})"
+        continue
+    # check if number
+    elif [[ ! ${script_idx} =~ ^[0-9]+$ ]]; then
+        warning_msg "not a valid script index (${script_idx})"
+        continue
+    fi
+    echo "${script_idx}: ${in_script[script_idx]}"
+    valid_script_idx=1
+done
+
+# ids
+echo -e "\nids:"
+in_ids=(`cat ${in_paths[ids]}`)
+for i in ${!in_ids[@]}; do
+    echo -e "${i}: ${in_ids[i]}"
+done
+echo -en "\nids idx to run?\t"
+# valid_ids_idx=
+read -r ids_idx
+echo "ids_idx: ${ids_idx}"
+
+echo -e "\nparallel:"
+pe_list=(0 sge slurm)
+for i in ${!pe_list[@]}; do
+    echo -e "${i}: ${pe_list[i]}"
+done
+
+# parallel
+echo -en "\nparallel environment to run?\t"
+valid_pe_idx=0
+while [[ ${valid_pe_idx} -eq 0 ]]; do
+    read -r pe_idx
+    if [[ ${pe_idx} -gt ${#pe_list[@]} ]]; then
+        warning_msg "not a valid parallel environment index (${pe_idx})"
+        continue
+    elif [[ ${pe_idx} -lt 0 ]]; then
+        warning_msg "not a valid parallel environment index (${pe_idx})"
+        continue
+    # check if number
+    elif [[ ! ${pe_idx} =~ ^[0-9]+$ ]]; then
+        warning_msg "not a valid parallel environment index (${pe_idx})"
+        continue
+    fi
+    
+    echo "${pe_idx}: ${pe_list[pe_idx]}"
+    valid_pe_idx=1
+done
+
+if [[ ${pe_idx} -gt 0 ]]; then
+    echo -en "\nparallel opts?\t"
+    read -r pe_opts
+fi
+
+if [[ ${pe_idx} -gt 0 ]]; then
+    echo -en "\nparallel job limit?\t"
+    read -r pe_job_limit
+fi
+
+# overwrite
+valid_overwrite=0
+while [[ ${valid_overwrite} -eq 0 ]]; do
+    echo -en "\novewrite? <0|1>\t"
+    read -r overwrite
+    if [[ ${overwrite} -eq 0 ]] || [[ ${overwrite} -eq 1 ]]; then
+        valid_overwrite=1
+    else
+        warning_msg "not a valid overwrite value (${overwrite})"
+    fi
+done
+
+in_script_run=`eval echo ${in_scripts[scripts_idx]}`
+cmd="flex_wrapper \
+--in-scripts ${in_script_run} \
+--in-ids ${in_paths[ids]} \
+--scripts-idx ${script_idx} \
+--ids-idx ${ids_idx} \
+--parallel ${pe_list[${pe_idx}]} \
+--parallel-opts ${pe_opts} \
+--parallel-job-limit ${pe_job_limit} \
+--overwrite ${overwrite} \
+--print 1"
+echo -e "\ncommand:\n${cmd}\n"
+eval ${cmd}
+
+# execute
+echo -en "\nok to run? <0|1>\t"
+read -r run
+if [[ ${run} -eq 1 ]]; then
+    cmd=`echo ${cmd} | sed 's/--print 1//'`
+    eval ${cmd}
+else
+    warning_msg "not running"
+fi
