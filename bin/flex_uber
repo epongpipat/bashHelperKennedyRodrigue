@@ -27,6 +27,9 @@ in_scripts=(`cat ${in_paths[preproc]}`)
 # main
 # ------------------------------------------------------------------------------
 
+echo ""
+warning_msg "please choose carefully, options are likely to change"
+
 # script set
 echo -e "\nscript sets:"
 for i in ${!in_scripts[@]}; do
