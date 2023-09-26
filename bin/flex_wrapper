@@ -92,7 +92,7 @@ print=0
 sge_server=0
 test=0
 overwrite=0
-set -e
+# set -e
 # color_red='\033[0;31m'
 # color_yellow='\033[0;33m'
 # color_default='\033[0m'
@@ -232,7 +232,12 @@ done
 # subset
 declare -a scripts
 for i in ${!scripts_idx[@]}; do
-    scripts[$i]=${in_scripts[${scripts_idx[$i]}]}
+    if [[ ${in_scripts[${scripts_idx[$i]}]} =~ '${root_dir}' ]]; then
+	root_dir=`get_root_dir kenrod`
+        scripts[$i]=`eval echo ${in_scripts[${scripts_idx[$i]}]}`
+    else
+        scripts[$i]=${in_scripts[${scripts_idx[$i]}]}
+    fi
 done
 
 echo -e "\nscripts:"
