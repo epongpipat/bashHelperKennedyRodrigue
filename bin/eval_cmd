@@ -1,9 +1,7 @@
 #!/bin/bash
-
-# red='\e[31m'
-# yellow='\e[33m'
-# nocolor='\e[39m'
  
+set -e
+
 # ------------------------------------------------------------------------------
 # usage
 # ------------------------------------------------------------------------------
@@ -31,7 +29,6 @@ usage() {
             show this help message and exit
         
 USAGE
-    # exit 1
 }
 
 # ------------------------------------------------------------------------------
@@ -85,22 +82,20 @@ if [[ ${print} -eq 1 ]]; then
     exit 0
 fi
 
-if [[ -f ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ -s ${out_path} ]]; then
+if [[ -e ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ -s ${out_path} ]]; then
     bash warning_msg "skipping, file already exists and overwrite set to 0"
-elif [[ -f ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ ! -s ${out_path} ]]; then
+elif [[ -e ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ ! -s ${out_path} ]]; then
     bash warning_msg "overwriting, file already exists and overwrite set to 0, but file is empty"
-    rm ${out_path}
+    rm -r ${out_path}
     eval ${cmd}
-elif [[ -f ${out_path} ]] && [[ ${overwrite} -eq 1 ]]; then
+elif [[ -e ${out_path} ]] && [[ ${overwrite} -eq 1 ]]; then
     bash warning_msg "overwriting, file already exists and overwrite set to 1"
-    rm ${out_path}
+    rm -r ${out_path}
     eval ${cmd}
-elif [[ ! -f ${out_path} ]]; then
+elif [[ ! -e ${out_path} ]]; then
     eval ${cmd}
 fi
 
-if [[ ! -f ${out_path} ]]; then
-    # echo -e "${red}error${nocolor}: output file not generated (${out_path})"
-    # exit 1
+if [[ ! -e ${out_path} ]]; then
     bash error_msg "output file not generated (${out_path})"
 fi
