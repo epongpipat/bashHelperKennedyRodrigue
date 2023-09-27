@@ -42,12 +42,6 @@ usage() {
         --parallel-job-limit, --parallel_job_limit <int>   (optional)
             maximum number of jobs to running on SGE (default: 0, i.e. no limit)
 
-        --sge-server, --sge_server <0|1|2>       (optional)
-            which SGE server to use
-                0. both (defult)
-                1. ponyo
-                2. totoro
-
         --print <0|1>                            (optional)
             print commands to screen only (default: 0)
 
@@ -142,10 +136,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --parallel_job_limit|--parallel-job-limit)
             parallel_job_limit=$2
-            shift 2
-            ;;
-        --sge_server)
-            sge_server=$2
             shift 2
             ;;
         --print)
@@ -385,11 +375,11 @@ if [[ ${parallel} == 'sge' ]]; then
             sge_opts="-N ${job_name}"
 
             # sge server
-            if [[ ${sge_server} -eq 1 ]]; then
-                sge_opts="${sge_opts} -q all.q@cvlkrcompute1.utdallas.edu"
-            elif [[ ${sge_server} -eq 2 ]]; then
-                sge_opts="${sge_opts} -q all.q@cvlkrcompute2.utdallas.edu"
-            fi
+            # if [[ ${sge_server} -eq 1 ]]; then
+            #     sge_opts="${sge_opts} -q all.q@cvlkrcompute1.utdallas.edu"
+            # elif [[ ${sge_server} -eq 2 ]]; then
+            #     sge_opts="${sge_opts} -q all.q@cvlkrcompute2.utdallas.edu"
+            # fi
 
             if [[ ! -z ${parallel_opts} ]]; then
                 sge_opts="${sge_opts} ${parallel_opts}"
