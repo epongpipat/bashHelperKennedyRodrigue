@@ -205,6 +205,7 @@ fi
 # ------------------------------------------------------------------------------
 # read in_scripts
 # ------------------------------------------------------------------------------
+check_file_type_crlf ${in_scripts}
 in_scripts=(`cat ${in_scripts}`)
 if [[ ${#in_scripts[@]} -eq 0 ]]; then
     # echo -e "\n${color_red}error${color_default}: no scripts found in ${in_scripts}"
@@ -249,6 +250,7 @@ done
 # ------------------------------------------------------------------------------
 # read ids
 # ------------------------------------------------------------------------------
+check_file_type_crlf ${in_ids}
 id_cols=(`head -n 1 ${in_ids} | sed 's/,/ /g'`)
 id_cols_alt=`head -n 1 ${in_ids}`
 # echo ${id_cols[@]}
