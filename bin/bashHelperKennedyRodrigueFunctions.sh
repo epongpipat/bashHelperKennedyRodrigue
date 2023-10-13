@@ -14,31 +14,34 @@ usage() {
 
     Options:
         --study <study> 
-            study id (required if available)
+            study id        (required if available)
 
         --sub <sub>
-            subject id (required if available)
+            subject id      (required if available)
 
         --ses <1|2|3> 
-            wave (required if available)
+            wave            (required if available)
+
+        --scan <scan>
+            scan            (required if available)
         
         --task <task>
-            task (required if available)
+            task            (required if available)
 
         --run <run>
-            run id (required if available)
+            run id          (required if available)
 
         --task <task>
-            task name (required if available)
+            task name       (required if available)
 
         --airc_id, --airc-id <airc_id>    
-            airc id (required if available)
+            airc id         (required if available)
 
         --data_ref, --data-ref <reference>
-            reference id (required if available)
+            reference id    (required if available)
 
         --date <YYYYMMDD>
-            date (required if available)
+            date            (required if available)
 
         --overwrite <0|1>
             flag to overwrite output (default: 0/false)
@@ -86,6 +89,11 @@ parse_args() {
                 wave=$2
                 ses=`printf "%02d" ${wave}`
                 opts="${opts} --ses ${ses}"
+                shift 2
+                ;;
+            --scan)
+                scan=$2
+                opts="${opts} --scan ${scan}"
                 shift 2
                 ;;
             --task)
@@ -179,6 +187,9 @@ print_header() {
     if [[ ! -z ${sub} ]]; then
         echo -e "sub:\t\t${sub}"
     fi
+    if [[ ! -z ${scan} ]]; then
+        echo -e "scan:\t\t${scan}"
+    fi
     if [[ ! -z ${airc_id} ]]; then
         echo -e "airc id:\t${airc_id}"
     fi
@@ -210,6 +221,9 @@ print_footer() {
     fi
     if [[ ! -z ${sub} ]]; then
         echo -e "sub:\t\t${sub}"
+    fi
+    if [[ ! -z ${scan} ]]; then
+        echo -e "scan:\t\t${scan}"
     fi
     if [[ ! -z ${airc_id} ]]; then
         echo -e "airc id:\t${airc_id}"
