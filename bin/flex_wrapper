@@ -30,16 +30,16 @@ usage() {
                 <int_start>:<int_end>   range of scripts to process (e.g., -s 1:3)
                 'all'                   process all scripts
 
-        --parallel <0|sge|slurm>                 (optional)
-            whether to run in parallel
+        --pe, --parallel <0|sge|slurm>            (optional)
+            whether to run using parallel engine
                 0       no parallelization, runs serially (default)
                 sge     SGE
                 slurm   SLURM
 
-        --parallel-opts, --parallel_opts <str>   (optional)
+        --pe-opts, --parallel-opts, --parallel_opts <str>   (optional)
             additional flags/options to pass to parallel engine
 
-        --parallel-job-limit, --parallel_job_limit <int>   (optional)
+        --pe-job-limit, --parallel-job-limit, --parallel_job_limit <int>   (optional)
             maximum number of jobs to running on SGE (default: 0, i.e. no limit)
 
         --print <0|1>                            (optional)
@@ -83,13 +83,19 @@ usage_ids_idx() {
 parallel=0
 parallel_job_limit=0
 print=0
-sge_server=0
-test=0
 overwrite=0
-# set -e
-# color_red='\033[0;31m'
-# color_yellow='\033[0;33m'
-# color_default='\033[0m'
+
+# ------------------------------------------------------------------------------
+# pe defaults
+# ------------------------------------------------------------------------------
+root_dir=`get_root_dir kenrod`
+slurm_opts_default="--partition=kenrod \
+--mail-type=FAIL \
+-D ${root_dir}/server/pe_logs"
+
+sge_opts_default="-j y \
+-m a \
+-M ${USER}@utdallas.edu"
 
 # ------------------------------------------------------------------------------
 # parse args
@@ -119,22 +125,20 @@ while [[ $# -gt 0 ]]; do
             ids_idx=$2
             shift 2
             ;;
-        --parallel)
+        --pe|--parallel)
             parallel=$2
             if [[ ${parallel} == "0" ]] || [[ ${parallel} == "sge" ]] || [[ ${parallel} == "slurm" ]]; then
                 shift 2
             else
                 usage
-                # echo -e "${color_red}error${color_default}: --parallel must be 0, sge, or slurm"
-                # exit 1
                 bash error_msg "--parallel must be 0, sge, or slurm"
             fi
             ;;
-        --parallel_opts|--parallel-opts)
+        --pe-opts|--parallel_opts|--parallel-opts)
             parallel_opts=$2
             shift 2
             ;;
-        --parallel_job_limit|--parallel-job-limit)
+        --pe-job-limit|--parallel_job_limit|--parallel-job-limit)
             parallel_job_limit=$2
             shift 2
             ;;
@@ -164,31 +168,23 @@ done
 # ------------------------------------------------------------------------------
 if [[ -z ${in_scripts} ]]; then
     usage
-    # echo -e "\n${color_red}error${color_default}: must specify --in_scripts"
-    # exit 1
     bash error_msg "must specify --in_scripts"
 fi
 
 if [[ -z ${in_ids} ]]; then
     usage
-    # echo -e "\n${color_red}error${color_default}: must specify --in_ids"
-    # exit 1
     bash error_msg "must specify --in_ids"
 fi
 
 if [[ -z ${scripts_idx} ]]; then
     usage
     usage_scripts_idx
-    # echo -e "\n${color_red}error${color_default}: must specify --scripts_idx\n"
-    # exit 1
     bash error_msg "must specify --scripts_idx"
 fi
 
 if [[ -z ${ids_idx} ]]; then
     usage
     usage_ids_idx
-    # echo -e "\n${color_red}error${color_default}: must specify --ids_idx\n"
-    # exit 1
     bash error_msg "must specify --ids_idx"
 fi
 
@@ -243,14 +239,9 @@ done
 check_file_type_crlf ${in_ids}
 id_cols=(`head -n 1 ${in_ids} | sed 's/,/ /g'`)
 id_cols_alt=`head -n 1 ${in_ids}`
-# echo ${id_cols[@]}
-# exit 1
 ids_all=(`cat ${in_ids}`)
-# id_cols=(`awk -F ',' '{print $1}' ${in_ids}`)
 
 if [[ ${#in_ids[@]} -eq 0 ]]; then
-    # echo -e "\n${color_red}error${color_default}: no ids found in ${in_ids}"
-    # exit 1
     bash error_msg "no ids found in ${in_ids}"
 fi
 
@@ -266,8 +257,6 @@ else
     ids_idx=(`echo ${ids_idx}`)
 fi
 
-# echo -e "\nids_idx: ${ids_idx[@]}"
-
 # subset
 declare -a ids
 for i in ${!ids_idx[@]}; do
@@ -280,8 +269,6 @@ for i in ${!ids[@]}; do
     echo -e "\t${c}:\t${ids[$i]}"
 done
 
-# exit 1
-
 # ------------------------------------------------------------------------------
 # parallel: 0 (serial)
 # ------------------------------------------------------------------------------
@@ -293,26 +280,16 @@ if [[ ${parallel} == "0" ]]; then
             s1=`echo ${s} + 1 | bc`
             i1=`echo ${i} + 1 | bc`
             echo -e "\n${s1},${i1},${ids[$i]}"
-
-            # ---
-            # flex options
-            # not working, but not sure why
-            # ---
-            # id_i=(`echo ${ids[${i}]} | sed 's/,/ /g'`)
-            # opts=""
-            # for j in ${!id_cols[@]}; do
-            #     opts="${opts}--${id_cols[${j}]} ${id_i[${j}]} "
-            # done
-            # opts="${opts}--overwrite ${overwrite}"
-
-            # ---
-            # fixed options
-            # ---
-            study=`echo ${id} | awk -F, '{print $1}'`
-            airc_id=`echo ${id} | awk -F, '{print $2}'`
-            sub=`echo ${id} | awk -F, '{print $3}'`
-            ses=`echo ${id} | awk -F, '{print $4}'`
-            opts="--study ${study} --airc_id ${airc_id} --sub ${sub} --ses ${ses} --overwrite ${overwrite}"
+            
+            # flex opts
+            opts_key=(`cat ${in_ids} | head -n 1 | sed 's/,/ /g'`)
+            opts_value=(`echo ${ids[$i]} | sed 's/,/ /g'`)
+            opts=""
+            for j in ${!opts_key[@]}; do
+                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]\n\r'` # remove hidden characters
+                opts="${opts}--${opts_key_temp} ${opts_value[${j}]} "
+            done
+            opts="${opts}--overwrite ${overwrite}"
             
             cmd="bash ${scripts[${s}]} ${opts}"
             echo -e "\ncommand:\n${cmd}\n"
@@ -326,13 +303,6 @@ fi
 # ------------------------------------------------------------------------------
 # parallel: sge
 # ------------------------------------------------------------------------------
-# sge_default_opts="-V \
-# -S /bin/bash \
-# -o jid-\$JOB_ID-\$TASK_ID_jname-\$JOB_NAME.log \
-# -j y \
-# -m a \
-# -M ${USER}@utdallas.edu"
-
 if [[ ${parallel} == 'sge' ]]; then
     echo -e "\nscript_idx,id_idx,${id_cols_alt}"
     module load sge
@@ -345,41 +315,28 @@ if [[ ${parallel} == 'sge' ]]; then
             i1=`echo ${i} + 1 | bc`
             echo -e "\n${s1},${i1},${ids[$i]}"
             
-            # ---
-            # flex options
-            # not working, but not sure why
-            # ---
-            # id_i=(`echo ${ids[$i]} | sed 's/,/ /g'`)
-            # opts=""
-            # for j in ${!id_cols[@]}; do
-            #     opts="${opts}--${id_cols[$j]} ${id_i[$j]} "
-            # done
-            # opts="${opts}--overwrite ${overwrite}"
-
-            # ---
-            # fixed options
-            # ---
-            study=`echo ${id} | awk -F, '{print $1}'`
-            airc_id=`echo ${id} | awk -F, '{print $2}'`
-            sub=`echo ${id} | awk -F, '{print $3}'`
-            ses=`echo ${id} | awk -F, '{print $4}'`
-            opts="--study ${study} --airc_id ${airc_id} --sub ${sub} --ses ${ses} --overwrite ${overwrite}"
+            # flex opts
+            opts_key=(`cat ${in_ids} | head -n 1 | sed 's/,/ /g'`)
+            opts_value=(`echo ${ids[$i]} | sed 's/,/ /g'`)
+            opts=""
+            # pe_job_name=""
+            for j in ${!opts_key[@]}; do
+                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]\n\r'` # remove hidden characters
+                opts="${opts}--${opts_key_temp} ${opts_value[${j}]} "
+                if [[ ${j} -eq 0 ]]; then
+                    pe_job_name="${opts_key_temp}-${opts_value[${j}]}"
+                else
+                    pe_job_name="${pe_job_name}_${opts_key_temp}-${opts_value[${j}]}"
+                fi
+            done
+            opts="${opts}--overwrite ${overwrite}"
             
             script_name=`basename ${scripts[${s}]} | sed 's/.sh//'`
-            job_name="sub-${sub}_ses-${ses}_script-${script_name}"
-            # job_name="${script_name}"
+            job_name="${pe_job_name}_script-${script_name}"
 
             job_id_list[${c}]=${job_name}
             
-            # sge_opts=""
-            sge_opts="-N ${job_name}"
-
-            # sge server
-            # if [[ ${sge_server} -eq 1 ]]; then
-            #     sge_opts="${sge_opts} -q all.q@cvlkrcompute1.utdallas.edu"
-            # elif [[ ${sge_server} -eq 2 ]]; then
-            #     sge_opts="${sge_opts} -q all.q@cvlkrcompute2.utdallas.edu"
-            # fi
+            sge_opts="${sge_opts_default} -N ${job_name}"
 
             if [[ ! -z ${parallel_opts} ]]; then
                 sge_opts="${sge_opts} ${parallel_opts}"
@@ -405,12 +362,6 @@ fi
 # ------------------------------------------------------------------------------
 # parallel: slurm
 # ------------------------------------------------------------------------------
-# slurm_opts="--shell=/bin/bash \
-# --output=jid-$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID_jname-$SLURM_JOB_NAME.log \
-# --error=jid-$SLURM_JOB_ID-$SLURM_ARRAY_TASK_ID_jname-$SLURM_JOB_NAME.log \
-# --mail-type=FAIL \
-# --mail-user=${USER}@utdallas.edu"
-
 if [[ ${parallel} == 'slurm' ]]; then
     echo -e "\nscript_idx,id_idx,${id_cols_alt}"
     declare -a job_id_list
@@ -422,38 +373,33 @@ if [[ ${parallel} == 'slurm' ]]; then
             i1=`echo ${i} + 1 | bc`
             echo -e "\n${s1},${i1},${ids[$i]}"
             
-            # ---
-            # flex options
-            # not working, but not sure why
-            # ---
-            # id_i=(`echo ${ids[$i]} | sed 's/,/ /g'`)
-            # opts=""
-            # for j in ${!id_cols[@]}; do
-            #     opts="${opts}--${id_cols[$j]} ${id_i[$j]} "
-            # done
-            # opts="${opts}--overwrite ${overwrite}"
-
-            # ---
-            # fixed options
-            # ---
-            study=`echo ${id} | awk -F, '{print $1}'`
-            airc_id=`echo ${id} | awk -F, '{print $2}'`
-            sub=`echo ${id} | awk -F, '{print $3}'`
-            ses=`echo ${id} | awk -F, '{print $4}'`
-            opts="--study ${study} --airc_id ${airc_id} --sub ${sub} --ses ${ses} --overwrite ${overwrite}"
+            # flex opts
+            opts_key=(`cat ${in_ids} | head -n 1 | sed 's/,/ /g'`)
+            opts_value=(`echo ${ids[$i]} | sed 's/,/ /g'`)
+            opts=""
+            for j in ${!opts_key[@]}; do
+                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]\n\r'` # remove hidden characters
+                opts="${opts}--${opts_key_temp} ${opts_value[${j}]} "
+                if [[ ${j} -eq 0 ]]; then
+                    pe_job_name="${opts_key_temp}-${opts_value[${j}]}"
+                else
+                    pe_job_name="${pe_job_name}_${opts_key_temp}-${opts_value[${j}]}"
+                fi
+            done
+            opts="${opts}--overwrite ${overwrite}"
             
             script_name=`basename ${scripts[${s}]} | sed 's/.sh//'`
-            job_name="sub-${sub}_ses-${ses}_script-${script_name}"
+            job_name="${pe_job_name}_script-${script_name}"
 
             job_id_list[${c}]=${job_name}
             
-            slurm_opts="--job-name=${job_name}"
+            slurm_opts="${slurm_opts_default} --job-name=${job_name}"
 
             if [[ ! -z ${parallel_opts} ]]; then
                 slurm_opts="${slurm_opts} ${parallel_opts}"
             fi
 
-            # sge job limit
+            # slurm job limit
             if [[ ${parallel_job_limit} -gt 0 ]] && [[ ${c} -ge ${parallel_job_limit} ]]; then
                 slurm_opts="${slurm_opts} --dependency=afternotok:${job_id_list[$((c - parallel_job_limit))]}"
             fi
