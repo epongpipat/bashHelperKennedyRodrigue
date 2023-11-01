@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# usage function
+# ------------------------------------------------------------------------------
+usage(){
+    echo -e "\n\tUsage: $0 <opts>\n"
+    echo -e "\t\tOptions:\n"
+    echo -e "\t\t-i, --in_path <in_path>\n\t\t\tinput path\n"
+    echo -e "\t\t-k, --key <key>\n\t\t\tkey in key-value pair\n"
+    echo -e "\t\t--warn <0|1>\n\t\t\twarn if more than one value found for key in path (default: 1)\n"
+    echo -e "\t\t-h, --help\n\t\t\thelp\n"
+    exit 1
+}
+
+# ------------------------------------------------------------------------------
+# parse arguments
+# ------------------------------------------------------------------------------
+warn=1
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -i|--in_path)
+            in_path="$2"
+            shift 2
+            ;;
+        -k|--key)
+            key="$2"
+            shift 2
+            ;;
+        --warn)
+            warn="$2"
+            shift 2
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+if [[ -z ${in_path} ]] || [[ -z ${key} ]]; then
+    usage
+fi
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+path_parts=(`echo ${in_path} | tr '/' ' ' | tr '_' ' '`)
+
+value=(`echo ${path_parts[@]} | tr ' ' '\n' | grep ${key} | cut -d '-' -f 2-`)
+
+if [[ ${#value[@]} -eq 0 ]]; then
+    error_msg "no value found for key in path\nin_path:\t${in_path}\nkey:\t\t${key}"
+fi
+
+if [ ${#value[@]} -gt 1 ]; then
+    if [[ ${warn} -eq 1 ]]; then
+        warning_msg "more than one value found for key in path\nin_path:\t${in_path}\nkey:\t\t${key}"
+    fi
+fi
+
+echo ${value[@]}
