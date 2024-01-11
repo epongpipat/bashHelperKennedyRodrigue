@@ -10,6 +10,10 @@ source bashHelperKennedyRodrigueFunctions.sh
 # opts
 # ------------------------------------------------------------------------------
 set -e
+study_list=(all jlbs pams)
+
+# declare -A wave_list
+# wave_list[jlbs]=(1 2 3)
 
 # ------------------------------------------------------------------------------
 # paths
@@ -18,7 +22,9 @@ root_dir=`get_root_dir kenrod`
 
 declare -A in_paths
 in_paths[preproc]="${root_dir}/software/scripts/eep170030/scripts.txt"
-in_paths[ids]="${root_dir}/software/scripts/eep170030/ids_long-format.csv"
+in_paths[all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
+in_paths[jlbs]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs.csv"
+in_paths[pams]="${root_dir}/software/scripts/eep170030/ids_long-format_study-pams.csv"
 
 in_scripts=(`cat ${in_paths[preproc]}`)
 # out_path="/Volumes/kenrod/software/scripts/eep170030/study-pams/mri/flex_uber.sh"
@@ -33,7 +39,7 @@ warning_msg "please choose carefully, options are likely to change"
 # script set
 echo -e "\nscript sets:"
 for i in ${!in_scripts[@]}; do
-    echo -e "${i}: ${in_scripts[i]}"
+    echo -e "\t${i}:\t${in_scripts[i]}"
 done
 
 echo -en "\nscript set idx to run?\t"
@@ -62,7 +68,7 @@ in_script_set=`eval echo ${in_scripts[scripts_idx]}`
 in_script=(`cat ${in_script_set}`)
 for i in ${!in_script[@]}; do
     i_str=$((i+1))
-    echo -e "${i_str}: ${in_script[i]}"
+    echo -e "\t${i_str}:\t${in_script[i]}"
 done
 echo -en "\nscript idx to run?\t"
 valid_script_idx=0
@@ -79,25 +85,34 @@ while [[ ${valid_script_idx} -eq 0 ]]; do
         warning_msg "not a valid script index (${script_idx})"
         continue
     fi
-    echo "${script_idx}: ${in_script[script_idx]}"
+    scripts_idx_tmp=$((script_idx-1))
+    echo "${script_idx}: ${in_script[scripts_idx_tmp]}"
     valid_script_idx=1
 done
 
+# studies
+echo -e "\nstudies:"
+for i in ${!study_list[@]}; do
+    echo -e "\t${i}:\t${study_list[i]}"
+done
+echo -en "\nstudy to run?\t"
+read -r study_idx
+study=${study_list[study_idx]}
+
 # ids
 echo -e "\nids:"
-in_ids=(`cat ${in_paths[ids]}`)
+in_ids=(`cat ${in_paths[${study}]}`)
 for i in ${!in_ids[@]}; do
-    echo -e "${i}: ${in_ids[i]}"
+    echo -e "\t${i}:\t${in_ids[i]}"
 done
 echo -en "\nids idx to run?\t"
-# valid_ids_idx=
 read -r ids_idx
 echo "ids_idx: ${ids_idx}"
 
-echo -e "\nparallel:"
+echo -e "\nparallel engine options:"
 pe_list=(0 sge slurm)
 for i in ${!pe_list[@]}; do
-    echo -e "${i}: ${pe_list[i]}"
+    echo -e "\t${i}:\t${pe_list[i]}"
 done
 
 # parallel
@@ -125,6 +140,9 @@ if [[ ${pe_idx} -gt 0 ]]; then
     echo -en "\nparallel opts?\t"
     read -r pe_opts
 fi
+if [[ -z ${pe_opts} ]]; then
+    pe_opts="''"
+fi
 
 if [[ ${pe_idx} -gt 0 ]]; then
     echo -en "\nparallel job limit?\t"
@@ -146,14 +164,18 @@ done
 in_script_run=`eval echo ${in_scripts[scripts_idx]}`
 cmd="flex_wrapper \
 --in-scripts ${in_script_run} \
---in-ids ${in_paths[ids]} \
+--in-ids ${in_paths[${study}]} \
 --scripts-idx ${script_idx} \
 --ids-idx ${ids_idx} \
---parallel ${pe_list[${pe_idx}]} \
---parallel-opts ${pe_opts} \
---parallel-job-limit ${pe_job_limit} \
 --overwrite ${overwrite} \
 --print 1"
+
+if [[ ${pe_idx} -gt 0 ]]; then
+    cmd="${cmd} \
+    --parallel ${pe_list[${pe_idx}]} \
+    --parallel-opts ${pe_opts} \
+    --parallel-job-limit ${pe_job_limit}"
+fi
 echo -e "\ncommand:\n${cmd}\n"
 eval ${cmd}
 
