@@ -17,6 +17,7 @@ usage() {
 
         -o, --out_path <out_path>
             output path (required)
+                can be specified multiple times
 
         --overwrite <0|1>
             flag to overwrite output (default: 0/false)
@@ -43,6 +44,8 @@ fi
 overwrite=0
 print=0
 # Parse command line arguments
+declare -a out_paths
+i=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -c|-cmd)
@@ -50,7 +53,8 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -o|--out_path) 
-            out_path=$2
+            out_paths[$i]=$2
+            i=$((i+1))
             shift 2
             ;;
         -p|--print)
@@ -82,20 +86,38 @@ if [[ ${print} -eq 1 ]]; then
     exit 0
 fi
 
-if [[ -e ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ -s ${out_path} ]]; then
-    bash warning_msg "skipping, file already exists and overwrite set to 0"
-elif [[ -e ${out_path} ]] && [[ ${overwrite} -eq 0 ]] && [[ ! -s ${out_path} ]]; then
-    bash warning_msg "overwriting, file already exists and overwrite set to 0, but file is empty"
-    rm -r ${out_path}
-    eval ${cmd}
-elif [[ -e ${out_path} ]] && [[ ${overwrite} -eq 1 ]]; then
+declare -A out_paths_exists
+for i in ${!out_paths[@]}; do
+    if [[ -e ${out_paths[$i]} ]] && [[ -s ${out_paths[$i]} ]]; then
+        out_paths_exists[$i]=${out_paths[$i]}
+    elif [[ -e ${out_paths[$i]} ]] && [[ ! -s ${out_paths[$i]} ]]; then
+        bash warning_msg "deleting, file already exists and overwrite set to 0, but file is empty"
+        rm -r ${out_paths[$i]}
+    fi
+done
+
+if [[ ${#out_paths_exists[@]} -gt 0 ]] && [[ ${overwrite} -eq 0 ]]; then
+    bash warning_msg "skipping, files already exists and overwrite set to 0"
+    echo -e "\noutput files:"
+    for i in ${!out_paths_exists[@]}; do
+        echo -e "\t${i}:\t${out_paths_exists[$i]}"
+    done
+elif [[ ${#out_paths_exists[@]} -gt 0 ]] && [[ ${overwrite} -eq 1 ]]; then
     bash warning_msg "overwriting, file already exists and overwrite set to 1"
-    rm -r ${out_path}
+    echo -e "\noutput files:"
+    for i in ${!out_paths_exists[@]}; do
+        echo -e "\t${i}:\t${out_paths_exists[$i]}"
+        rm -r ${out_paths_exists[$i]}
+    done
     eval ${cmd}
-elif [[ ! -e ${out_path} ]]; then
+elif [[ ${#out_paths_exists[@]} -eq 0 ]]; then
     eval ${cmd}
 fi
 
-if [[ ! -e ${out_path} ]]; then
-    bash error_msg "output file not generated (${out_path})"
-fi
+ensure_permissions ${out_paths[@]}
+
+for i in ${!out_paths[@]}; do
+    if [[ ! -e ${out_paths[$i]} ]]; then
+        bash error_msg "output file not generated (${out_paths[$i]})"
+    fi
+done
