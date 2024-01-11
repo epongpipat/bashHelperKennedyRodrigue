@@ -286,7 +286,7 @@ if [[ ${parallel} == "0" ]]; then
             opts_value=(`echo ${ids[$i]} | sed 's/,/ /g'`)
             opts=""
             for j in ${!opts_key[@]}; do
-                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]\n\r'` # remove hidden characters
+                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]_\n\r'` # remove hidden characters
                 opts="${opts}--${opts_key_temp} ${opts_value[${j}]} "
             done
             opts="${opts}--overwrite ${overwrite}"
@@ -321,7 +321,7 @@ if [[ ${parallel} == 'sge' ]]; then
             opts=""
             # pe_job_name=""
             for j in ${!opts_key[@]}; do
-                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]\n\r'` # remove hidden characters
+                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]_\n\r'` # remove hidden characters
                 opts="${opts}--${opts_key_temp} ${opts_value[${j}]} "
                 if [[ ${j} -eq 0 ]]; then
                     pe_job_name="${opts_key_temp}-${opts_value[${j}]}"
@@ -378,7 +378,7 @@ if [[ ${parallel} == 'slurm' ]]; then
             opts_value=(`echo ${ids[$i]} | sed 's/,/ /g'`)
             opts=""
             for j in ${!opts_key[@]}; do
-                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]\n\r'` # remove hidden characters
+                opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]_\n\r'` # remove hidden characters
                 opts="${opts}--${opts_key_temp} ${opts_value[${j}]} "
                 if [[ ${j} -eq 0 ]]; then
                     pe_job_name="${opts_key_temp}-${opts_value[${j}]}"
@@ -401,7 +401,9 @@ if [[ ${parallel} == 'slurm' ]]; then
 
             # slurm job limit
             if [[ ${parallel_job_limit} -gt 0 ]] && [[ ${c} -ge ${parallel_job_limit} ]]; then
-                slurm_opts="${slurm_opts} --dependency=afternotok:${job_id_list[$((c - parallel_job_limit))]}"
+                job_name_dependency=`echo ${job_id_list[$((c - parallel_job_limit))]}`
+                job_id_dependency=`squeue --long --format="%i,%j" | grep ${job_name_dependency} | awk -F ',' '{print $1}'`
+                slurm_opts="${slurm_opts} --dependency=afterany:${job_id_dependency}"
             fi
 
             cmd="sbatch ${slurm_opts} ${scripts[$s]} ${opts}"
