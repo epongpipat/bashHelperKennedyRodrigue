@@ -86,38 +86,46 @@ if [[ ${print} -eq 1 ]]; then
     exit 0
 fi
 
-declare -A out_paths_exists
+declare -A out_paths_e
+declare -A out_paths_ne
 for i in ${!out_paths[@]}; do
     if [[ -e ${out_paths[$i]} ]] && [[ -s ${out_paths[$i]} ]]; then
-        out_paths_exists[$i]=${out_paths[$i]}
+        out_paths_e[$i]=${out_paths[$i]}
     elif [[ -e ${out_paths[$i]} ]] && [[ ! -s ${out_paths[$i]} ]]; then
-        bash warning_msg "deleting, file already exists and overwrite set to 0, but file is empty"
+        bash warning_msg "deleting, file already exists and overwrite set to 0, but file is empty (${out_paths[$i]})"
         rm -r ${out_paths[$i]}
+        out_paths_ne[$i]=${out_paths[$i]}
+    elif [[ ! -e ${out_paths[$i]} ]]; then
+        out_paths_ne[$i]=${out_paths[$i]}
     fi
 done
 
-if [[ ${#out_paths_exists[@]} -gt 0 ]] && [[ ${overwrite} -eq 0 ]]; then
+if [[ ${#out_paths_e[@]} -gt 0 ]] && [[ ${overwrite} -eq 0 ]]; then
     bash warning_msg "skipping, files already exists and overwrite set to 0"
-    echo -e "\noutput files:"
-    for i in ${!out_paths_exists[@]}; do
-        echo -e "\t${i}:\t${out_paths_exists[$i]}"
+    # echo -e "\t output files:"
+    for i in ${!out_paths_e[@]}; do
+        echo -e "\t\t${i}:\t${out_paths_e[$i]}"
     done
-elif [[ ${#out_paths_exists[@]} -gt 0 ]] && [[ ${overwrite} -eq 1 ]]; then
+    for i in ${!out_paths_ne[@]}; do
+        echo -e "\t\t${i}:\t${out_paths_ne[$i]} (missing)"
+    done
+    echo ""
+elif [[ ${#out_paths_e[@]} -gt 0 ]] && [[ ${overwrite} -eq 1 ]]; then
     bash warning_msg "overwriting, file already exists and overwrite set to 1"
     echo -e "\noutput files:"
-    for i in ${!out_paths_exists[@]}; do
-        echo -e "\t${i}:\t${out_paths_exists[$i]}"
-        rm -r ${out_paths_exists[$i]}
+    for i in ${!out_paths_e[@]}; do
+        echo -e "\t${i}:\t${out_paths_e[$i]}"
+        rm -r ${out_paths_e[$i]}
     done
     eval ${cmd}
-elif [[ ${#out_paths_exists[@]} -eq 0 ]]; then
+elif [[ ${#out_paths_e[@]} -eq 0 ]]; then
     eval ${cmd}
 fi
-
-ensure_permissions ${out_paths[@]}
 
 for i in ${!out_paths[@]}; do
     if [[ ! -e ${out_paths[$i]} ]]; then
         bash error_msg "output file not generated (${out_paths[$i]})"
+    else
+        ensure_permissions ${out_paths[$i]}
     fi
 done
