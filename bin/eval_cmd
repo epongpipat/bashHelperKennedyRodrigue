@@ -112,11 +112,11 @@ if [[ ${#out_paths_e[@]} -gt 0 ]] && [[ ${overwrite} -eq 0 ]]; then
     echo ""
 elif [[ ${#out_paths_e[@]} -gt 0 ]] && [[ ${overwrite} -eq 1 ]]; then
     bash warning_msg "overwriting, file already exists and overwrite set to 1"
-    echo -e "\noutput files:"
     for i in ${!out_paths_e[@]}; do
-        echo -e "\t${i}:\t${out_paths_e[$i]}"
+        echo -e "\t\t${i}:\t${out_paths_e[$i]}"
         rm -r ${out_paths_e[$i]}
     done
+    echo ""
     eval ${cmd}
 elif [[ ${#out_paths_e[@]} -eq 0 ]]; then
     eval ${cmd}
