@@ -86,8 +86,12 @@ parse_args() {
                 shift 2
                 ;;
             --ses)
-                wave=$2
-                ses=`printf "%02d" ${wave}`
+                if [[ ${2} =~ ^[0-9]+$ ]]; then
+                    wave=$2
+                    ses=`printf "%02d" ${wave}`
+                else 
+                    ses=$2
+                fi
                 opts="${opts} --ses ${ses}"
                 shift 2
                 ;;
