@@ -1,0 +1,92 @@
+#!/bin/bash
+
+set -e
+
+# ------------------------------------------------------------------------------
+# usage
+# ------------------------------------------------------------------------------
+function usage() {
+  echo -e "\n\tusage:\t\tfilter_ids <opts>"
+  echo -e "\n\tdescription:\tfilter ids from a csv file and return the row indices"
+  echo -e "\n\toptions:\t"
+  echo -e "\t\t--study\t\tstudy name"
+  echo -e "\t\t--sub\t\tsubject id"
+  echo -e "\t\t--ses\t\tsession id"
+  echo -e "\t\t--scan\t\tscan id"
+  echo ""
+}
+
+# ------------------------------------------------------------------------------
+# args
+# ------------------------------------------------------------------------------
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 0
+fi
+
+vars=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --study)
+      study=$2
+      vars="${vars} study"
+      shift 2
+      ;;
+    --sub)
+      sub=$2
+      vars="${vars} sub"
+      shift 2
+      ;;
+    --ses)
+      ses=$2
+      vars="${vars} ses"
+      shift 2
+      ;;
+    --scan)
+      scan=$2
+      vars="${vars} scan"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo -e "\n\tunknown option: $1"
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# ------------------------------------------------------------------------------
+# paths
+# ------------------------------------------------------------------------------
+declare -A in_paths
+in_ids="${root_dir}/software/scripts/eep170030/ids_long-format_study-all_desc-sorted-by-study-sub-ses-scan.csv"
+
+# ------------------------------------------------------------------------------
+# check paths
+# ------------------------------------------------------------------------------
+check_in_paths ${in_ids}
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+# Read the column names from the header line
+header=$(head -n 1 "$in_ids")
+
+# Extract the desired column names dynamically
+study_col=$(echo "$header" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "study") print i }')
+subj_col=$(echo "$header" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "sub") print i }')
+ses_col=$(echo "$header" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "ses") print i }')
+# scan_col=$(echo "$header" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "scan") print i }')
+
+# Read the CSV file and filter lines based on arguments
+awk -F, -v study="$study" -v subj="$sub" -v ses="$ses" \
+    -v study_col="$study_col" -v subj_col="$subj_col" -v ses_col="$ses_col" '
+    NR > 1 && \
+    ($study_col == study || study == "") && \
+    ($subj_col == subj || subj == "") && \
+    ($ses_col == ses || ses == "")
+' "$in_ids"
