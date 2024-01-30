@@ -26,7 +26,7 @@ in_paths[all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.
 in_paths[jlbs]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs.csv"
 in_paths[pams]="${root_dir}/software/scripts/eep170030/ids_long-format_study-pams.csv"
 
-in_scripts=(`cat ${in_paths[preproc]}`)
+in_scripts=(`cat ${in_paths[preproc]} | sort`)
 # out_path="/Volumes/kenrod/software/scripts/eep170030/study-pams/mri/flex_uber.sh"
 
 # ------------------------------------------------------------------------------
@@ -145,8 +145,11 @@ if [[ -z ${pe_opts} ]]; then
 fi
 
 if [[ ${pe_idx} -gt 0 ]]; then
-    echo -en "\nparallel job limit?\t"
+    echo -en "\nparallel job limit? (default: 0)\t"
     read -r pe_job_limit
+fi
+if [[ -z ${pe_job_limit} ]]; then
+    pe_job_limit=0
 fi
 
 # overwrite
