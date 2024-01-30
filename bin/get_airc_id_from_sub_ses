@@ -34,7 +34,9 @@ fi
 # ------------------------------------------------------------------------------
 code_dir=`dirname ${0}`
 root_dir=`${code_dir}/get_root_dir kenrod`
-in_ids='${root_dir}/incoming/ids_long-format.csv'
+in_ids="${root_dir}/study-jlbs/sourcedata/ids_long-format.csv"
+
+check_in_paths ${in_ids}
 
 # ------------------------------------------------------------------------------
 # main
