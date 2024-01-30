@@ -1,16 +1,37 @@
 #!/bin/bash
 
+# ------------------------------------------------------------------------------
+# args
+# ------------------------------------------------------------------------------
 airc_id=$1
+if [[ -z ${airc_id} ]]; then
+    echo -e "\nusage: get_sub_from_airc_id <airc_id>\n"
+    error_msg "airc_id not defined"
+    exit 1
+fi
 
-code_dir=`dirname ${0}`
-root_dir=`${code_dir}/get_root_dir kenrod`
+# ------------------------------------------------------------------------------
+# paths
+# ------------------------------------------------------------------------------
+# code_dir=`dirname ${0}`
+root_dir=`get_root_dir kenrod`
+in_ids="${root_dir}/study-jlbs/sourcedata/ids_format-long_desc-arranged-by-sub.csv"
+check_in_paths ${in_ids}
 
-ses=`cat ${root_dir}/incoming/ids_long-format.csv | grep ${airc_id} | awk -F ',' '{print $3}'`
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+hdr=`head -n 1 ${in_ids}`
+ses_col=$(echo "$hdr" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "ses") print i }')
 
-if [[ -z ${ses} ]] || [[ ${ses} == 'NA' ]]; then
-    # echo "error: session/wave could not be found for ${airc_id}" 1>&2
-    # exit 1
-    bash error_msg "session/wave could not be found for ${airc_id}"
+cmd="cat ${in_ids} | grep ${airc_id} | awk -F ',' -v ses_col=${ses_col} '{print \$ses_col}'"
+# echo ${cmd}
+ses=`eval ${cmd}`
+
+if [[ -z ${ses} ]]; then
+    error_msg "ses not found (airc_id: ${airc_id})"
+    exit 1
 fi
 
 echo ${ses}
+

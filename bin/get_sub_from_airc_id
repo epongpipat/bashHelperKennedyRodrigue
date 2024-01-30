@@ -1,11 +1,37 @@
 #!/bin/bash
 
+# ------------------------------------------------------------------------------
+# args
+# ------------------------------------------------------------------------------
 airc_id=$1
+if [[ -z ${airc_id} ]]; then
+    echo -e "\nusage: get_sub_from_airc_id <airc_id>\n"
+    error_msg "airc_id not defined"
+    exit 1
+fi
 
-code_dir=`dirname ${0}`
-root_dir=`${code_dir}/get_root_dir kenrod`
+# ------------------------------------------------------------------------------
+# paths
+# ------------------------------------------------------------------------------
+# code_dir=`dirname ${0}`
+root_dir=`get_root_dir kenrod`
+in_ids="${root_dir}/study-jlbs/sourcedata/ids_format-long_desc-arranged-by-sub.csv"
+check_in_paths ${in_ids}
 
-sub=`cat ${root_dir}/incoming/ids_long-format.csv | grep ${airc_id} | awk -F ',' '{print $2}'`
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+hdr=`head -n 1 ${in_ids}`
+sub_col=$(echo "$hdr" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "sub") print i }')
+
+cmd="cat ${in_ids} | grep ${airc_id} | awk -F ',' -v sub_col=${sub_col} '{print \$sub_col}'"
+# echo ${cmd}
+sub=`eval ${cmd}`
+
+if [[ -z ${sub} ]]; then
+    error_msg "sub not found (airc_id: ${airc_id})"
+    exit 1
+fi
 
 echo ${sub}
 
