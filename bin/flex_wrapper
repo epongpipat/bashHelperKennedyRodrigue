@@ -392,8 +392,8 @@ if [[ ${parallel} == 'slurm' ]]; then
             job_name="${pe_job_name}_script-${script_name}"
 
             job_id_list[${c}]=${job_name}
-            
-            slurm_opts="${slurm_opts_default} --job-name=${job_name}"
+            export slurm_code_dir=`dirname ${scripts[${s}]}`
+            slurm_opts="${slurm_opts_default} --job-name=${job_name} --export=slurm_code_dir"
 
             if [[ ! -z ${parallel_opts} ]]; then
                 slurm_opts="${slurm_opts} ${parallel_opts}"
