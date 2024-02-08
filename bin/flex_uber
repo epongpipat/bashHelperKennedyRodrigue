@@ -23,12 +23,13 @@ root_dir=`get_root_dir kenrod`
 
 declare -A in_paths
 in_paths[preproc]="${root_dir}/software/scripts/eep170030/scripts.txt"
-in_paths[all_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
-in_paths[jlbs_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-all.csv"
-in_paths[jlbs_ses-01]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-01.csv"
-in_paths[jlbs_ses-02]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-02.csv"
-in_paths[jlbs_ses-03]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-03.csv"
-in_paths[pams]="${root_dir}/software/scripts/eep170030/ids_long-format_study-pams_ses-all.csv"
+in_paths[ids]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all_desc-sorted-by-study-sub-ses-scan.csv"
+# in_paths[all_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
+# in_paths[jlbs_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-all.csv"
+# in_paths[jlbs_ses-01]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-01.csv"
+# in_paths[jlbs_ses-02]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-02.csv"
+# in_paths[jlbs_ses-03]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-03.csv"
+# in_paths[pams]="${root_dir}/software/scripts/eep170030/ids_long-format_study-pams_ses-all.csv"
 
 in_scripts=(`cat ${in_paths[preproc]} | sort`)
 # out_path="/Volumes/kenrod/software/scripts/eep170030/study-pams/mri/flex_uber.sh"
@@ -174,41 +175,61 @@ ses=${ses_list[$ses_idx]}
 if [[ ${ses} =~ ^[0-9]$ ]]; then
     ses=`printf "%02d" ${ses}`
 fi
-study="${study}_ses-${ses}"
-echo "study: ${study}"
+echo "ses: ${ses}"
+# study="${study}_ses-${ses}"
+# echo "study: ${study}"
 
 # ------------------------------------------------------------------------------
-# ids
+# ids using filter
 # ------------------------------------------------------------------------------
-echo -e "\nids:"
-in_ids=(`cat ${in_paths[${study}]}`)
+in_ids=(`filter_ids --study ${study} --ses ${ses}`)
 if [[ ${#in_ids[@]} -lt 1 ]]; then
     error_msg "no ids found for ${study}"
 fi
 for i in ${!in_ids[@]}; do
-    echo -e "\t${i}:\t${in_ids[i]}"
+    i_str=`echo ${in_ids[$i]} | awk -F, '{print $1}'`
+    echo -e "\t${i_str}:\t${in_ids[i]}"
 done
-echo -en "\n[PROMPT] which ids do you want to run? (enter index number or hit enter to use default; default: all)\n"
-valid_opt=0
-while [[ ${valid_opt} -eq 0 ]]; do
-    read -r ids_idx
-    if [[ -z ${ids_idx} ]]; then
-        ids_idx="all"
-        valid_opt=1
-    elif [[ ${ids_idx} -gt ${#in_ids[@]} ]]; then
-        warning_msg "not a valid ids index (${ids_idx})"
-        continue
-    elif [[ ${ids_idx} -lt 0 ]]; then
-        warning_msg "not a valid ids index (${ids_idx})"
-        continue
-    elif [[ ! ${ids_idx} =~ ^[0-9]+$ ]]; then
-        warning_msg "not a valid ids index (${ids_idx})"
-        continue
-    else
-        valid_opt=1
-    fi
-done
+echo -en "\n[PROMPT] which subjects do you want to run? (enter index number or hit enter to use default; default: all)\n"
+read -r ids_idx
+if [[ -z ${ids_idx} ]]; then
+    echo "ids_idx: all"
+    ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
+fi
 echo "ids_idx: ${ids_idx}"
+
+# ------------------------------------------------------------------------------
+# ids original
+# ------------------------------------------------------------------------------
+# echo -e "\nids:"
+# in_ids=(`cat ${in_paths[${study}]}`)
+# if [[ ${#in_ids[@]} -lt 1 ]]; then
+#     error_msg "no ids found for ${study}"
+# fi
+# for i in ${!in_ids[@]}; do
+#     echo -e "\t${i}:\t${in_ids[i]}"
+# done
+# valid_opt=0
+# while [[ ${valid_opt} -eq 0 ]]; do
+#     echo -en "\n[PROMPT] which ids do you want to run? (enter index number or hit enter to use default; default: all)\n"
+#     read -r ids_idx
+#     if [[ -z ${ids_idx} ]]; then
+#         ids_idx="all"
+#         valid_opt=1
+#     elif [[ ${ids_idx} -gt ${#in_ids[@]} ]]; then
+#         warning_msg "not a valid ids index (${ids_idx})"
+#         continue
+#     elif [[ ${ids_idx} -lt 0 ]]; then
+#         warning_msg "not a valid ids index (${ids_idx})"
+#         continue
+#     elif [[ ! ${ids_idx} =~ ^[0-9]+$ ]]; then
+#         warning_msg "not a valid ids index (${ids_idx})"
+#         continue
+#     else
+#         valid_opt=1
+#     fi
+# done
+# echo "ids_idx: ${ids_idx}"
 
 # ------------------------------------------------------------------------------
 # parallel
@@ -219,27 +240,27 @@ for i in ${!pe_list[@]}; do
     echo -e "\t${i}:\t${pe_list[i]}"
 done
 
-echo -en "\n[PROMPT] which parallel environment do you want to run? (enter index number or hit enter to use default; default: 0 [none])\n"
-valid_pe_idx=0
-while [[ ${valid_pe_idx} -eq 0 ]]; do
+valid_opt=0
+while [[ ${valid_opt} -eq 0 ]]; do
+    echo -en "\n[PROMPT] which parallel environment do you want to run? (enter index number or hit enter to use default; default: 0 [none])\n"
     read -r pe_idx
     if [[ -z ${pe_idx} ]]; then
         pe_idx=0
+        valid_opt=1
     elif [[ ${pe_idx} -gt ${#pe_list[@]} ]]; then
         warning_msg "not a valid parallel environment index (${pe_idx})"
         continue
     elif [[ ${pe_idx} -lt 0 ]]; then
         warning_msg "not a valid parallel environment index (${pe_idx})"
         continue
-    # check if number
     elif [[ ! ${pe_idx} =~ ^[0-9]+$ ]]; then
         warning_msg "not a valid parallel environment index (${pe_idx})"
         continue
+    else
+        valid_opt=1
     fi
-    
-    echo "${pe_idx}: ${pe_list[pe_idx]}"
-    valid_pe_idx=1
 done
+echo "${pe_idx}: ${pe_list[$pe_idx]}"
 
 if [[ ${pe_idx} -gt 0 ]]; then
     echo -en "\n[PROMPT] parallel opts? (enter additioanl parallel engine options or hit enter to use default; default: none)\t"
@@ -280,10 +301,11 @@ echo "overwrite: ${overwrite}"
 # ------------------------------------------------------------------------------
 # cmd
 # ------------------------------------------------------------------------------
+# --in-ids ${in_paths[${study}]} \
 in_script_run=`eval echo ${in_scripts[scripts_idx]}`
 cmd="flex_wrapper \
 --in-scripts ${in_script_run} \
---in-ids ${in_paths[${study}]} \
+--in-ids ${in_paths[ids]} \
 --scripts-idx ${script_idx} \
 --ids-idx ${ids_idx} \
 --overwrite ${overwrite} \
