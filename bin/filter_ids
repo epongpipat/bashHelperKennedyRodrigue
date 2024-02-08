@@ -9,10 +9,12 @@ function usage() {
   echo -e "\n\tusage:\t\tfilter_ids <opts>"
   echo -e "\n\tdescription:\tfilter ids from a csv file and return the row indices"
   echo -e "\n\toptions:\t"
-  echo -e "\t\t--study\t\tstudy name"
-  echo -e "\t\t--sub\t\tsubject id"
-  echo -e "\t\t--ses\t\tsession id"
-  echo -e "\t\t--scan\t\tscan id"
+  echo -e "\t\t--study <study>\t\tstudy name"
+  echo -e "\t\t--sub <sub>\t\tsubject id"
+  echo -e "\t\t--ses <ses>\t\tsession id"
+  echo -e "\t\t--scan <scan>\t\tscan id"
+  echo -e "\t\t--idx-only <0|1>\treturn row indices only (default: 0)"
+  echo -e "\t\t-h|--help\t\ttdisplay help message"
   echo ""
 }
 
@@ -24,27 +26,66 @@ if [[ $# -eq 0 ]]; then
   exit 0
 fi
 
+# defaults
+idx_only=0
+
 vars=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --study)
       study=$2
+      if [[ -z ${study} ]]; then
+        usage
+        error_msg "study value not specified"
+        exit 1
+      fi
       vars="${vars} study"
       shift 2
       ;;
     --sub)
       sub=$2
+      if [[ -z ${sub} ]]; then
+        usage
+        error_msg "sub value not specified"
+        exit 1
+      fi
       vars="${vars} sub"
       shift 2
       ;;
     --ses)
       ses=$2
+      if [[ -z ${ses} ]]; then
+        usage
+        error_msg "ses value not specified"
+        exit 1
+      fi
       vars="${vars} ses"
       shift 2
       ;;
     --scan)
       scan=$2
+      if [[ -z ${scan} ]]; then
+        usage
+        error_msg "scan value not specified"
+        exit 1
+      fi
       vars="${vars} scan"
+      shift 2
+      ;;
+    --idx-only)
+      idx_only=$2
+      if [[ -z ${idx_only} ]]; then
+        usage
+        error_msg "idx_only value not specified"
+        exit 1
+      fi
+      if [[ ${idx_only} -ne 0 ]] && [[ ${idx_only} -ne 1 ]]; then
+        # echo -e "\n\tinvalid idx_only value: ${idx_only}"
+        usage
+        error_msg "invalid idx_only value (${idx_only}), must be 0 or 1"
+        exit 1
+      fi
+      vars="${vars} idx_only"
       shift 2
       ;;
     -h|--help)
@@ -77,16 +118,53 @@ check_in_paths ${in_ids}
 header=$(head -n 1 "$in_ids")
 
 # Extract the desired column names dynamically
-study_col=$(echo "$header" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "study") print i }')
-subj_col=$(echo "$header" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "sub") print i }')
-ses_col=$(echo "$header" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "ses") print i }')
-# scan_col=$(echo "$header" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "scan") print i }')
+study_col=$(echo "${header}" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "study") print i }')
+subj_col=$(echo "${header}" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "sub") print i }')
+ses_col=$(echo "${header}" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "ses") print i }')
+scan_col=$(echo "${header}" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "scan") print i }')
 
 # Read the CSV file and filter lines based on arguments
-awk -F, -v study="$study" -v subj="$sub" -v ses="$ses" \
-    -v study_col="$study_col" -v subj_col="$subj_col" -v ses_col="$ses_col" '
-    NR > 1 && \
-    ($study_col == study || study == "") && \
-    ($subj_col == subj || subj == "") && \
-    ($ses_col == ses || ses == "")
-' "$in_ids"
+if [[ ${idx_only} == 0 ]]; then
+  awk \
+  -F, \
+  -v study=${study} \
+  -v subj=${sub} \
+  -v ses=${ses} \
+  -v scan=${scan} \
+  -v study_col=${study_col} \
+  -v subj_col=${subj_col} \
+  -v ses_col=${ses_col} \
+  -v scan_col=${scan_col} \
+  ' \
+  NR > 1 && \
+  ($study_col == study || study == "") && \
+  ($subj_col == subj || subj == "") && \
+  ($ses_col == ses || ses == "") && \
+  ($scan_col == scan || scan == "") \
+  {
+      print FNR - 1 "," $0;
+  }
+  ' "${in_ids}"
+elif [[ ${idx_only} -eq 1 ]]; then
+  row_numbers=`awk \
+  -F, \
+  -v study="${study}" \
+  -v subj="${sub}" \
+  -v ses="${ses}" \
+  -v scan="${scan}" \
+  -v study_col="${study_col}" \
+  -v subj_col="${subj_col}" \
+  -v ses_col="${ses_col}" \
+  -v scan_col="${scan_col}" \
+  ' \
+  NR > 1 && \
+  ($study_col == study || study == "") && \
+  ($subj_col == subj || subj == "") && \
+  ($ses_col == ses || ses == "") && \
+  ($scan_col == scan || scan == "") \
+  {
+      print FNR - 1;
+  }
+  ' "$in_ids" | tr '\n' ' ' | sed 's/ /,/g' | sed 's/,$//g'`
+  echo "${row_numbers}"
+fi
