@@ -38,6 +38,8 @@ while [[ $# -gt 0 ]]; do
         usage
         error_msg "study value not specified"
         exit 1
+      elif [[ ${study} == "all" ]]; then
+        study=""
       fi
       vars="${vars} study"
       shift 2
@@ -48,6 +50,8 @@ while [[ $# -gt 0 ]]; do
         usage
         error_msg "sub value not specified"
         exit 1
+      elif [[ ${sub} == "all" ]]; then
+        sub=""
       fi
       vars="${vars} sub"
       shift 2
@@ -58,6 +62,8 @@ while [[ $# -gt 0 ]]; do
         usage
         error_msg "ses value not specified"
         exit 1
+      elif [[ ${ses} == "all" ]]; then
+        ses=""
       fi
       vars="${vars} ses"
       shift 2
@@ -68,6 +74,8 @@ while [[ $# -gt 0 ]]; do
         usage
         error_msg "scan value not specified"
         exit 1
+      elif [[ ${scan} == "all" ]]; then
+        scan=""
       fi
       vars="${vars} scan"
       shift 2
