@@ -12,8 +12,9 @@ source bashHelperKennedyRodrigueFunctions.sh
 set -e
 study_list=(all jlbs pams)
 
-# declare -A wave_list
-# wave_list[jlbs]=(1 2 3)
+declare -A wave_list
+wave_list[jlbs]="all 1 2 3"
+wave_list[pams]="all"
 
 # ------------------------------------------------------------------------------
 # paths
@@ -22,9 +23,12 @@ root_dir=`get_root_dir kenrod`
 
 declare -A in_paths
 in_paths[preproc]="${root_dir}/software/scripts/eep170030/scripts.txt"
-in_paths[all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
-in_paths[jlbs]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs.csv"
-in_paths[pams]="${root_dir}/software/scripts/eep170030/ids_long-format_study-pams.csv"
+in_paths[all_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
+in_paths[jlbs_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-all.csv"
+in_paths[jlbs_ses-01]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-01.csv"
+in_paths[jlbs_ses-02]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-02.csv"
+in_paths[jlbs_ses-03]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-03.csv"
+in_paths[pams]="${root_dir}/software/scripts/eep170030/ids_long-format_study-pams_ses-all.csv"
 
 in_scripts=(`cat ${in_paths[preproc]} | sort`)
 # out_path="/Volumes/kenrod/software/scripts/eep170030/study-pams/mri/flex_uber.sh"
@@ -33,94 +37,195 @@ in_scripts=(`cat ${in_paths[preproc]} | sort`)
 # main
 # ------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------
+# script set
+# ------------------------------------------------------------------------------
 echo ""
 warning_msg "please choose carefully, options are likely to change"
-
-# script set
-echo -e "\nscript sets:"
+echo -e "\nscript sets (sorted):"
 for i in ${!in_scripts[@]}; do
-    echo -e "\t${i}:\t${in_scripts[i]}"
+    i_str=$((i+1))
+    echo -e "\t${i_str}:\t${in_scripts[$i]}"
 done
-
-echo -en "\nscript set idx to run?\t"
-valid_script_idx=0
-while [[ ${valid_script_idx} -eq 0 ]]; do
+valid_opt=0
+while [[ ${valid_opt} -eq 0 ]]; do
+    echo -en "\n[PROMPT] which script set do you want to run? (enter index number)\n"
     read -r scripts_idx
     if [[ ${scripts_idx} -gt ${#in_scripts[@]} ]]; then
         warning_msg "not a valid script index (${scripts_idx})"
         continue
-    elif [[ ${scripts_idx} -lt 0 ]]; then
+    elif [[ ${scripts_idx} -lt 1 ]]; then
         warning_msg "not a valid script index (${scripts_idx})"
         continue
-    # check if number
     elif [[ ! ${scripts_idx} =~ ^[0-9]+$ ]]; then
         warning_msg "not a valid script index (${scripts_idx})"
         continue
+    else
+        valid_opt=1
     fi
-    
-    echo "${scripts_idx}: ${in_scripts[scripts_idx]}"
-    valid_script_idx=1
 done
+scripts_idx1=${scripts_idx}
+scripts_idx=$((scripts_idx-1))
+echo "${scripts_idx1}: ${in_scripts[$scripts_idx]}"
 
+# ------------------------------------------------------------------------------
 # script
+# ------------------------------------------------------------------------------
 echo -e "\nscripts:"
 in_script_set=`eval echo ${in_scripts[scripts_idx]}`
 in_script=(`cat ${in_script_set}`)
+if [[ ${#in_script[@]} -lt 1 ]]; then
+    error_msg "no scripts found for ${in_script_set}"
+fi
 for i in ${!in_script[@]}; do
     i_str=$((i+1))
     echo -e "\t${i_str}:\t${in_script[i]}"
 done
-echo -en "\nscript idx to run?\t"
-valid_script_idx=0
-while [[ ${valid_script_idx} -eq 0 ]]; do
+valid_opt=0
+while [[ ${valid_opt} -eq 0 ]]; do
+    echo -en "\n[PROMPT] which script do you want to run? (enter index number)\n"
     read -r script_idx
     if [[ ${script_idx} -gt ${#in_script[@]} ]]; then
         warning_msg "not a valid script index (${script_idx})"
         continue
-    elif [[ ${script_idx} -lt 0 ]]; then
+    elif [[ ${script_idx} -lt 1 ]]; then
         warning_msg "not a valid script index (${script_idx})"
         continue
-    # check if number
     elif [[ ! ${script_idx} =~ ^[0-9]+$ ]]; then
         warning_msg "not a valid script index (${script_idx})"
         continue
+    else
+        valid_opt=1
     fi
-    scripts_idx_tmp=$((script_idx-1))
-    echo "${script_idx}: ${in_script[scripts_idx_tmp]}"
-    valid_script_idx=1
 done
+scripts_idx_tmp=$((script_idx-1))
+echo "${script_idx}: ${in_script[$scripts_idx_tmp]}"
 
-# studies
+# ------------------------------------------------------------------------------
+# study
+# ------------------------------------------------------------------------------
 echo -e "\nstudies:"
 for i in ${!study_list[@]}; do
     echo -e "\t${i}:\t${study_list[i]}"
 done
-echo -en "\nstudy to run?\t"
-read -r study_idx
-study=${study_list[study_idx]}
+valid_opt=0
+while [[ ${valid_opt} -eq 0 ]]; do
+    echo -en "\n[PROMPT] which study do you want to run? (enter index number or hit enter to use default; default: 0 [all])\n"
+    read -r study_idx
+    n_studies=${#study_list[@]}
+    n_studies=$((n_studies-1))
+    if [[ -z ${study_idx} ]]; then
+        study_idx=0
+        valid_opt=1
+    elif [[ ${study_idx} -gt ${#n_studies[@]} ]]; then
+        warning_msg "not a valid study index (${study_idx})"
+        continue
+    elif [[ ${study_idx} -lt 0 ]]; then
+        warning_msg "not a valid study index (${study_idx})"
+        continue
+    elif [[ ! ${study_idx} =~ ^[0-9]+$ ]]; then
+        warning_msg "not a valid study index (${study_idx})"
+        continue
+    else
+        valid_opt=1
+    fi
+done
+echo "${study_idx}: ${study_list[$study_idx]}"
+study=${study_list[$study_idx]}
 
+# ------------------------------------------------------------------------------
+# session
+# ------------------------------------------------------------------------------
+echo -e "\nsessions:"
+ses_list=(`echo ${wave_list[${study}]}`)
+if [[ ${study} == 'all' ]]; then
+    ses_list=(`echo ${wave_list[jlbs]} ${wave_list[pams]}`)
+    valid_opt=1
+    ses_idx=0
+elif [[ ${#ses_list[@]} -lt 1 ]]; then
+    error_msg "no sessions found for ${study}"
+else
+    for i in ${!ses_list[@]}; do
+        echo -e "\t${i}:\t${ses_list[$i]}"
+    done
+    valid_opt=0
+fi
+while [[ ${valid_opt} -eq 0 ]]; do
+    echo -en "\n[PROMPT] which session do you want to run? (enter index number or hit enter to use default; default: 0 [all])\n"
+    read -r ses_idx
+    if [[ -z ${ses_idx} ]]; then
+        ses_idx=0
+        valid_opt=1
+    elif [[ ${ses_idx} -gt ${#ses_list[@]} ]]; then
+        warning_msg "not a valid session index (${ses_idx})"
+        continue
+    elif [[ ${ses_idx} -lt 0 ]]; then
+        warning_msg "not a valid session index (${ses_idx})"
+        continue
+    elif [[ ! ${ses_idx} =~ ^[0-9]+$ ]]; then
+        warning_msg "not a valid session index (${ses_idx})"
+        continue
+    else
+        valid_opt=1
+    fi
+done
+echo "${ses_idx}: ${ses_list[$ses_idx]}"
+ses=${ses_list[$ses_idx]}
+if [[ ${ses} =~ ^[0-9]$ ]]; then
+    ses=`printf "%02d" ${ses}`
+fi
+study="${study}_ses-${ses}"
+echo "study: ${study}"
+
+# ------------------------------------------------------------------------------
 # ids
+# ------------------------------------------------------------------------------
 echo -e "\nids:"
 in_ids=(`cat ${in_paths[${study}]}`)
+if [[ ${#in_ids[@]} -lt 1 ]]; then
+    error_msg "no ids found for ${study}"
+fi
 for i in ${!in_ids[@]}; do
     echo -e "\t${i}:\t${in_ids[i]}"
 done
-echo -en "\nids idx to run?\t"
-read -r ids_idx
+echo -en "\n[PROMPT] which ids do you want to run? (enter index number or hit enter to use default; default: all)\n"
+valid_opt=0
+while [[ ${valid_opt} -eq 0 ]]; do
+    read -r ids_idx
+    if [[ -z ${ids_idx} ]]; then
+        ids_idx="all"
+        valid_opt=1
+    elif [[ ${ids_idx} -gt ${#in_ids[@]} ]]; then
+        warning_msg "not a valid ids index (${ids_idx})"
+        continue
+    elif [[ ${ids_idx} -lt 0 ]]; then
+        warning_msg "not a valid ids index (${ids_idx})"
+        continue
+    elif [[ ! ${ids_idx} =~ ^[0-9]+$ ]]; then
+        warning_msg "not a valid ids index (${ids_idx})"
+        continue
+    else
+        valid_opt=1
+    fi
+done
 echo "ids_idx: ${ids_idx}"
 
+# ------------------------------------------------------------------------------
+# parallel
+# ------------------------------------------------------------------------------
 echo -e "\nparallel engine options:"
 pe_list=(0 sge slurm)
 for i in ${!pe_list[@]}; do
     echo -e "\t${i}:\t${pe_list[i]}"
 done
 
-# parallel
-echo -en "\nparallel environment to run?\t"
+echo -en "\n[PROMPT] which parallel environment do you want to run? (enter index number or hit enter to use default; default: 0 [none])\n"
 valid_pe_idx=0
 while [[ ${valid_pe_idx} -eq 0 ]]; do
     read -r pe_idx
-    if [[ ${pe_idx} -gt ${#pe_list[@]} ]]; then
+    if [[ -z ${pe_idx} ]]; then
+        pe_idx=0
+    elif [[ ${pe_idx} -gt ${#pe_list[@]} ]]; then
         warning_msg "not a valid parallel environment index (${pe_idx})"
         continue
     elif [[ ${pe_idx} -lt 0 ]]; then
@@ -137,33 +242,44 @@ while [[ ${valid_pe_idx} -eq 0 ]]; do
 done
 
 if [[ ${pe_idx} -gt 0 ]]; then
-    echo -en "\nparallel opts?\t"
+    echo -en "\n[PROMPT] parallel opts? (enter additioanl parallel engine options or hit enter to use default; default: none)\t"
     read -r pe_opts
 fi
 if [[ -z ${pe_opts} ]]; then
     pe_opts="''"
+else
+    pe_opts="'${pe_opts}'"
 fi
 
 if [[ ${pe_idx} -gt 0 ]]; then
-    echo -en "\nparallel job limit? (default: 0)\t"
+    echo -en "\n[PROMPT] parallel job limit? (enter number or hit enter to use default; default: 0)\t"
     read -r pe_job_limit
 fi
 if [[ -z ${pe_job_limit} ]]; then
     pe_job_limit=0
 fi
 
+# ------------------------------------------------------------------------------
 # overwrite
-valid_overwrite=0
-while [[ ${valid_overwrite} -eq 0 ]]; do
-    echo -en "\novewrite? <0|1>\t"
+# ------------------------------------------------------------------------------
+valid_opt=0
+while [[ ${valid_opt} -eq 0 ]]; do
+    echo -en "\n[PROMPT] do you want to ovewrite output files (enter 0 or 1, or hit enter to use default; default: 0 [no])\n"
     read -r overwrite
-    if [[ ${overwrite} -eq 0 ]] || [[ ${overwrite} -eq 1 ]]; then
-        valid_overwrite=1
+    if [[ -z ${overwrite} ]]; then
+        overwrite=0
+        valid_opt=1
+    elif [[ ${overwrite} -eq 0 ]] || [[ ${overwrite} -eq 1 ]]; then
+        valid_opt=1
     else
         warning_msg "not a valid overwrite value (${overwrite})"
     fi
 done
+echo "overwrite: ${overwrite}"
 
+# ------------------------------------------------------------------------------
+# cmd
+# ------------------------------------------------------------------------------
 in_script_run=`eval echo ${in_scripts[scripts_idx]}`
 cmd="flex_wrapper \
 --in-scripts ${in_script_run} \
@@ -172,7 +288,6 @@ cmd="flex_wrapper \
 --ids-idx ${ids_idx} \
 --overwrite ${overwrite} \
 --print 1"
-
 if [[ ${pe_idx} -gt 0 ]]; then
     cmd="${cmd} \
     --parallel ${pe_list[${pe_idx}]} \
@@ -182,11 +297,22 @@ fi
 echo -e "\ncommand:\n${cmd}\n"
 eval ${cmd}
 
+# ------------------------------------------------------------------------------
 # execute
-echo -en "\nok to run? <0|1>\t"
-read -r run
+# ------------------------------------------------------------------------------
+cmd=`echo ${cmd} | sed 's/--print 1/--print 0/'`
+valid_opt=0
+while [[ ${valid_opt} -eq 0 ]]; do
+    echo -en "\n[PROMPT] ok to run? (enter 0 or 1, or hit enter to use default; default: 0)\t"
+    read -r run
+    if [[ ${run} -eq 0 ]] || [[ ${run} -eq 1 ]]; then
+        valid_opt=1
+    else
+        echo -en "\n[PROMPT] not a valid run value (${run}), please enter 0 or 1\n"
+        read -r run
+    fi
+done
 if [[ ${run} -eq 1 ]]; then
-    cmd=`echo ${cmd} | sed 's/--print 1//'`
     eval ${cmd}
 else
     warning_msg "not running"
