@@ -114,11 +114,11 @@ while [[ ${valid_opt} -eq 0 ]]; do
     echo -en "\n[PROMPT] which study do you want to run? (enter index number or hit enter to use default; default: 0 [all])\n"
     read -r study_idx
     n_studies=${#study_list[@]}
-    n_studies=$((n_studies-1))
+    # n_studies=$((n_studies-1))
     if [[ -z ${study_idx} ]]; then
         study_idx=0
         valid_opt=1
-    elif [[ ${study_idx} -gt ${#n_studies[@]} ]]; then
+    elif [[ ${study_idx} -gt ${n_studies} ]]; then
         warning_msg "not a valid study index (${study_idx})"
         continue
     elif [[ ${study_idx} -lt 0 ]]; then
