@@ -112,6 +112,7 @@ done
 # paths
 # ------------------------------------------------------------------------------
 declare -A in_paths
+root_dir=`get_root_dir kenrod`
 in_ids="${root_dir}/software/scripts/eep170030/ids_long-format_study-all_desc-sorted-by-study-sub-ses-scan.csv"
 
 # ------------------------------------------------------------------------------
