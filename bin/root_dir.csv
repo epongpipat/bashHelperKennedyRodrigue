@@ -8,6 +8,9 @@ Linux,cvlkrcompute2.utdallas.edu,kenrod,/cvl/kenrod
 Linux,login-01,kmk,/mfs/cvl/groups/kennedy
 Linux,login-01,kmr,/mfs/cvl/groups/rodrigue
 Linux,login-01,kenrod,/mfs/cvl/groups/kenrod
+Linux,vdi-01,kmk,/mfs/cvl/groups/kennedy
+Linux,vdi-01,kmr,/mfs/cvl/groups/rodrigue
+Linux,vdi-01,kenrod,/mfs/cvl/groups/kenrod
 Darwin,local,kmk,/Volumes/kennedy
 Darwin,local,kmr,/Volumes/rodrigue
 Darwin,local,kenrod,/Volumes/kenrod
