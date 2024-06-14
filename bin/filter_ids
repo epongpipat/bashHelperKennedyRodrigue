@@ -183,7 +183,7 @@ elif [[ ${idx_only} -eq 1 ]]; then
   -v subj_col="${subj_col}" \
   -v ses_col="${ses_col}" \
   -v scan_col="${scan_col}" \
-  -v airc_id_col="${airc_id_col}
+  -v airc_id_col="${airc_id_col}" \
   ' \
   NR > 1 && \
   ($study_col == study || study == "") && \
