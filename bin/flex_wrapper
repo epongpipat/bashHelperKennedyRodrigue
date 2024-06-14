@@ -89,10 +89,19 @@ overwrite=0
 # pe defaults
 # ------------------------------------------------------------------------------
 root_dir=`get_root_dir kenrod`
-slurm_opts_default="--partition=kenrod \
---mail-type=FAIL \
--D ${root_dir}/server/pe_logs"
+date_str=`date +%Y-%m-%d`
+datetime=`date +%Y-%m-%dT%H:%M:%S%z`
 
+# slurm
+slurm_pwd="${root_dir}/server/logs/${USER}/${date_str}"
+# slurm_opts_default="--partition=kenrod \
+# --mail-type=FAIL \
+# -D ${slurm_pwd}"
+
+slurm_opts_default="--partition=kenrod \
+-D ${slurm_pwd}"
+
+# sge
 sge_opts_default="-j y \
 -m a \
 -M ${USER}@utdallas.edu"
@@ -304,6 +313,7 @@ fi
 # parallel: sge
 # ------------------------------------------------------------------------------
 if [[ ${parallel} == 'sge' ]]; then
+    
     echo -e "\nscript_idx,id_idx,${id_cols_alt}"
     module load sge
     declare -a job_id_list
@@ -363,8 +373,12 @@ fi
 # parallel: slurm
 # ------------------------------------------------------------------------------
 if [[ ${parallel} == 'slurm' ]]; then
+    if [[ ! -d ${slurm_pwd} ]]; then
+        mkdir -p ${slurm_pwd}
+    fi
     echo -e "\nscript_idx,id_idx,${id_cols_alt}"
-    declare -a job_id_list
+    declare -a job_ids
+    declare -a job_names
     c=0
     for s in ${!scripts[@]}; do
         for i in ${!ids[@]}; do
@@ -380,20 +394,21 @@ if [[ ${parallel} == 'slurm' ]]; then
             for j in ${!opts_key[@]}; do
                 opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]_\n\r'` # remove hidden characters
                 opts="${opts}--${opts_key_temp} ${opts_value[${j}]} "
-                if [[ ${j} -eq 0 ]]; then
-                    pe_job_name="${opts_key_temp}-${opts_value[${j}]}"
-                else
-                    pe_job_name="${pe_job_name}_${opts_key_temp}-${opts_value[${j}]}"
-                fi
+                # if [[ ${j} -eq 0 ]]; then
+                #     pe_job_name="${opts_key_temp}-${opts_value[${j}]}"
+                # else
+                #     pe_job_name="${pe_job_name}_${opts_key_temp}-${opts_value[${j}]}"
+                # fi
             done
             opts="${opts}--overwrite ${overwrite}"
             
             script_name=`basename ${scripts[${s}]} | sed 's/.sh//'`
-            job_name="${pe_job_name}_script-${script_name}"
+            job_name="script-${script_name}_idx-${i1}"
 
-            job_id_list[${c}]=${job_name}
-            export slurm_code_dir=`dirname ${scripts[${s}]}`
-            slurm_opts="${slurm_opts_default} --job-name=${job_name} --export=slurm_code_dir"
+            job_names[${c}]=${job_name}
+            # export slurm_code_dir=`dirname ${scripts[${s}]}`
+            # slurm_opts="${slurm_opts_default} --job-name=${job_name} --export=slurm_code_dir"
+            slurm_opts="${slurm_opts_default} --job-name=${job_name}"
 
             if [[ ! -z ${parallel_opts} ]]; then
                 slurm_opts="${slurm_opts} ${parallel_opts}"
@@ -401,8 +416,9 @@ if [[ ${parallel} == 'slurm' ]]; then
 
             # slurm job limit
             if [[ ${parallel_job_limit} -gt 0 ]] && [[ ${c} -ge ${parallel_job_limit} ]]; then
-                job_name_dependency=`echo ${job_id_list[$((c - parallel_job_limit))]}`
-                job_id_dependency=`squeue --long --format="%i,%j" | grep ${job_name_dependency} | awk -F ',' '{print $1}'`
+                # job_name_dependency=`echo ${job_id_list[$((c - parallel_job_limit))]}`
+                # job_id_dependency=`squeue --long --format="%i,%j" | grep ${job_name_dependency} | awk -F ',' '{print $1}'`
+                job_id_dependency=`echo ${job_ids[$((c - parallel_job_limit))]}`
                 slurm_opts="${slurm_opts} --dependency=afterany:${job_id_dependency}"
             fi
 
@@ -410,7 +426,9 @@ if [[ ${parallel} == 'slurm' ]]; then
         
             echo -e "command:\n${cmd}"
             if [[ ${print} -eq 0 ]]; then
-                eval ${cmd}
+                slurm_sub=`eval ${cmd}`
+                echo ${slurm_sub}
+                job_ids[${c}]=`echo ${slurm_sub} | awk -F ' ' '{print $4}'`
             fi
 
             c=`echo ${c} + 1 | bc`
