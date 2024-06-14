@@ -11,6 +11,9 @@ Linux,login-01,kenrod,/mfs/cvl/groups/kenrod
 Linux,vdi-01,kmk,/mfs/cvl/groups/kennedy
 Linux,vdi-01,kmr,/mfs/cvl/groups/rodrigue
 Linux,vdi-01,kenrod,/mfs/cvl/groups/kenrod
+Linux,compute-02,kmk,/mfs/cvl/groups/kennedy
+Linux,compute-02,kmr,/mfs/cvl/groups/rodrigue
+Linux,compute-02,kenrod,/mfs/cvl/groups/kenrod
 Darwin,local,kmk,/Volumes/kennedy
 Darwin,local,kmr,/Volumes/rodrigue
 Darwin,local,kenrod,/Volumes/kenrod
