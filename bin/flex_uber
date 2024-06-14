@@ -263,7 +263,10 @@ done
 echo "${pe_idx}: ${pe_list[$pe_idx]}"
 
 if [[ ${pe_idx} -gt 0 ]]; then
-    echo -en "\n[PROMPT] parallel opts? (enter additioanl parallel engine options or hit enter to use default; default: none)\t"
+    echo -e "\nBefore running parallel jobs using the parallel engine, please consider the following:"
+    echo -e "- please ensure that the parallel settings are properly configured in the script. for more details, please see the following link:\n\thttps://kennedy-rodrigue-wiki.readthedocs.io/en/latest/server.html#parallel-jobs"
+    echo -e "- please test a single subject first to ensure the job is running as expected"
+    echo -en "\n[PROMPT] parallel opts? (enter additioanl parallel engine options or hit enter to use default; default: none)\n"
     read -r pe_opts
 fi
 if [[ -z ${pe_opts} ]]; then
@@ -273,7 +276,7 @@ else
 fi
 
 if [[ ${pe_idx} -gt 0 ]]; then
-    echo -en "\n[PROMPT] parallel job limit? (enter number or hit enter to use default; default: 0)\t"
+    echo -en "\n[PROMPT] parallel job limit? (enter number or hit enter to use default; default: 0)\n"
     read -r pe_job_limit
 fi
 if [[ -z ${pe_job_limit} ]]; then
@@ -325,7 +328,7 @@ eval ${cmd}
 cmd=`echo ${cmd} | sed 's/--print 1/--print 0/'`
 valid_opt=0
 while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] ok to run? (enter 0 or 1, or hit enter to use default; default: 0)\t"
+    echo -en "\n[PROMPT] ok to run? (enter 0 or 1, or hit enter to use default; default: 0)\n"
     read -r run
     if [[ ${run} -eq 0 ]] || [[ ${run} -eq 1 ]]; then
         valid_opt=1
