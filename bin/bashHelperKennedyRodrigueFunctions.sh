@@ -1,59 +1,55 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
+declare -a args_order
+args_order+=("study")
+args_order+=("sub")
+args_order+=("ses")
+args_order+=("scan")
+args_order+=("task")
+args_order+=("run")
+args_order+=("hemi")
+args_order+=("airc_id")
+args_order+=("data_ref")
+args_order+=("date")
+args_order+=("overwrite")
+args_order+=("print")
+args_order+=("help")
+
+declare -A help
+help[study]="study id"
+help[sub]="subject label"
+help[ses]="session/wave label"
+help[scan]="scan label"
+help[task]="task label"
+help[run]="run label"
+help[hemi]="hemisphere label (L or R)"
+help[airc_id]="airc id"
+help[data_ref]="reference id"
+help[date]="date (YYYYMMDD)"
+help[overwrite]="flag to overwrite output (default: 0/false)"
+help[print]="flag to print command only (does not execute command) (default: 0/false)"
+help[help]="show this help message and exit"
 
 # ------------------------------------------------------------------------------
 # usage function
 # ------------------------------------------------------------------------------
 usage() {
-
-    cat <<USAGE
-    
-    Usage: $0 [options]
-
-    Options:
-        --study <study> 
-            study id        (required if available)
-
-        --sub <sub>
-            subject id      (required if available)
-
-        --ses <1|2|3> 
-            wave            (required if available)
-
-        --scan <scan>
-            scan            (required if available)
-        
-        --task <task>
-            task            (required if available)
-
-        --run <run>
-            run id          (required if available)
-
-        --task <task>
-            task name       (required if available)
-
-        --airc_id, --airc-id <airc_id>    
-            airc id         (required if available)
-
-        --data_ref, --data-ref <reference>
-            reference id    (required if available)
-
-        --date <YYYYMMDD>
-            date            (required if available)
-
-        --overwrite <0|1>
-            flag to overwrite output (default: 0/false)
-
-        --print <0|1>
-            flag to print command only (does not execute command) (default: 0/false)
-
-        -h, --help
-            show this help message and exit
-        
-USAGE
-    # exit 1
+    help_msg="usage: $0 [options]"
+    help_msg="${help_msg}\n\noptions:"
+    for key in "${args_order[@]}"; do
+        if [[ ${key} =~ '_' ]]; then
+            key_alt=`echo ${key} | sed 's/_/-/g'`
+            help_msg="${help_msg}\n\n\t--${key}, --${key_alt} <${key}>"
+        elif [[ ${key} == "overwrite" ]] || [[ ${key} == "print" ]]; then
+            help_msg="${help_msg}\n\n\t--${key} <0|1>"
+        else
+            help_msg="${help_msg}\n\n\t--${key} <${key}>"
+        fi
+        help_msg="${help_msg}\n\t\t${help[${key}]}"
+    done
+    echo -e "${help_msg}\n"
 }
 
 # ------------------------------------------------------------------------------
@@ -102,6 +98,9 @@ parse_args() {
                 ;;
             --task)
                 task=$2
+                if [[ ${task} == 'nback' ]]; then
+                    task_alt='Nback'
+                fi
                 opts="${opts} --task ${task}"
                 shift 2
                 ;;
@@ -110,12 +109,13 @@ parse_args() {
                 opts="${opts} --run ${run}"
                 shift 2
                 ;;
-            --task)
-                task=$2
-                if [[ ${task} == 'nback' ]]; then
-                    task_alt='Nback'
+            --hemi)
+                hemi=$2
+                if [[ ${hemi} != 'L' ]] && [[ ${hemi} != 'R' ]]; then
+                    error_msg "hemi must be L or R"
                 fi
-                opts="${opts} --task ${task}"
+                opts="${opts} --hemi ${hemi}"
+                args_used+=("hemi")
                 shift 2
                 ;;
             --airc_id|--airc-id)
@@ -132,10 +132,10 @@ parse_args() {
             --date)
                 date=$2
                 if [[ ! $date =~ ^[0-9]{8}$ ]]; then
-                    bash error_msg "date must be in the format YYYYMMDD"
+                    error_msg "date must be in the format YYYYMMDD"
                 fi
                 if [[ $date -gt $(date +%Y%m%d) ]]; then
-                    bash error_msg "date must be today's date or a past date"
+                    error_msg "date must be today's date or a past date"
                 fi
                 opts="${opts} --date ${date}"
                 shift 2
@@ -156,7 +156,7 @@ parse_args() {
                 ;;
             *)
                 usage
-                bash error_msg "unknown argument: $1"
+                error_msg "unknown argument: $1"
                 ;;
         esac
     done
@@ -167,13 +167,16 @@ parse_args() {
 # ------------------------------------------------------------------------------
 check_req_args() {
     local args=(${@})
+    local missing_args=()
     for arg in "${args[@]}"; do
         if [[ -z ${!arg} ]]; then
-            bash error_msg "missing argument (${arg})"
+            missing_args+=(${arg})
         fi
     done
+    if [[ ${#missing_args[@]} -gt 0 ]]; then
+        error_msg "missing required arguments (${missing_args[@]})"
+    fi  
 }
-
 
 # ------------------------------------------------------------------------------
 # print header
@@ -185,28 +188,13 @@ print_header() {
     echo -e "user:\t\t${USER}"
     echo -e "host:\t\t${HOSTNAME}"
     echo ""
-    if [[ ! -z ${study} ]]; then
-        echo -e "study:\t\t${study}"
-    fi
-    if [[ ! -z ${sub} ]]; then
-        echo -e "sub:\t\t${sub}"
-    fi
-    if [[ ! -z ${scan} ]]; then
-        echo -e "scan:\t\t${scan}"
-    fi
-    if [[ ! -z ${airc_id} ]]; then
-        echo -e "airc id:\t${airc_id}"
-    fi
-    if [[ ! -z ${ses} ]]; then
-        echo -e "ses:\t\t${ses}"
-    fi
-    if [[ ! -z ${task} ]]; then
-        echo -e "task:\t\t${task}"
-    fi
-    if [[ ! -z ${run} ]]; then
-        echo -e "run:\t\t${run}"
-    fi
-    echo ""
+    for i in ${!args_order[@]}; do
+        if [[ -z ${!args_order[$i]} ]]; then
+            continue
+        fi
+        printf "%-10s\t%s\n" ${args_order[$i]}: ${!args_order[$i]}
+    done
+    echo -e "\n--------------------------------------------------------------------------------\n"
     SECONDS=0
 }
 
@@ -214,33 +202,18 @@ print_header() {
 # print footer
 # ------------------------------------------------------------------------------
 print_footer() {
-    echo ""
+    echo -e "\n--------------------------------------------------------------------------------\n"
     echo -e "date:\t\t$(date)"
     echo -e "script:\t\t${0}"
     echo -e "user:\t\t${USER}"
     echo -e "host:\t\t${HOSTNAME}"
     echo ""
-    if [[ ! -z ${study} ]]; then
-        echo -e "study:\t\t${study}"
-    fi
-    if [[ ! -z ${sub} ]]; then
-        echo -e "sub:\t\t${sub}"
-    fi
-    if [[ ! -z ${scan} ]]; then
-        echo -e "scan:\t\t${scan}"
-    fi
-    if [[ ! -z ${airc_id} ]]; then
-        echo -e "airc id:\t${airc_id}"
-    fi
-    if [[ ! -z ${ses} ]]; then
-        echo -e "ses:\t\t${ses}"
-    fi
-    if [[ ! -z ${task} ]]; then
-        echo -e "task:\t\t${task}"
-    fi
-    if [[ ! -z ${run} ]]; then
-        echo -e "run:\t\t${run}"
-    fi
+    for i in ${!args_order[@]}; do
+        if [[ -z ${!args_order[$i]} ]]; then
+            continue
+        fi
+        printf "%-10s\t%s\n" ${args_order[$i]}: ${!args_order[$i]}
+    done
     echo ""
     echo -e "duration:\t`get_duration ${SECONDS}`"
     echo ""
