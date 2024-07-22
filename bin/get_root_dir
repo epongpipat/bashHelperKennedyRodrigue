@@ -61,4 +61,11 @@ if [[ ${os} == 'Linux' ]]; then
 elif [[ ${os} == 'Darwin' ]] || [[ ${os} == 'Windows_NT' ]]; then
     root_dir=`cat ${code_dir}/root_dir.csv | grep ${dir} | grep ${os} | awk -F, '{print $4}'`
 fi
-echo "${root_dir}"
+root_dir=`eval echo ${root_dir}`
+if [[ -z ${root_dir} ]]; then
+    error_msg "no root_dir found (os: ${os}; hostname: ${hostname})"
+elif [[ ! -e ${root_dir} ]]; then
+    error_msg "file does not exist (${root_dir})"
+else
+    echo "${root_dir}"
+fi
