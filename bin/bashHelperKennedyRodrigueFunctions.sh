@@ -10,6 +10,7 @@ args_order+=("scan")
 args_order+=("task")
 args_order+=("run")
 args_order+=("hemi")
+args_order+=("desc")
 args_order+=("airc_id")
 args_order+=("data_ref")
 args_order+=("date")
@@ -25,6 +26,7 @@ help[scan]="scan label"
 help[task]="task label"
 help[run]="run label"
 help[hemi]="hemisphere label (L or R)"
+help[desc]="description label"
 help[airc_id]="airc id"
 help[data_ref]="reference id"
 help[date]="date (YYYYMMDD)"
@@ -116,6 +118,11 @@ parse_args() {
                 fi
                 opts="${opts} --hemi ${hemi}"
                 args_used+=("hemi")
+                shift 2
+                ;;
+            --desc)
+                desc=$2
+                opts="${opts} --desc ${desc}"
                 shift 2
                 ;;
             --airc_id|--airc-id)
@@ -217,4 +224,26 @@ print_footer() {
     echo ""
     echo -e "duration:\t`get_duration ${SECONDS}`"
     echo ""
+}
+
+# ------------------------------------------------------------------------------
+# get args from idx
+# ------------------------------------------------------------------------------
+root_dir=`get_root_dir kenrod`
+in_path="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
+
+get_args_from_idx() {
+    local idx=${1}
+
+    if [ -z ${idx} ]; then
+        echo "Usage: get_args_from_idx <idx>"
+        exit 1
+    fi
+
+    columns=(`cat ${in_path} | head -n 1 | tail -n 1 | tr ',' '\n'`)
+    data=(`cat ${in_path} | head -n $idx | tail -n 1 | tr ',' '\n'`)
+
+    for i in `seq 0 $((${#columns[@]}-1))`; do
+        eval "${columns[$i]}=${data[$i]}"
+    done
 }
