@@ -30,9 +30,14 @@ fi
 # main
 # ------------------------------------------------------------------------------
 in_paths=($@)
+missing_str=""
+declare -a missing_paths
 for key in "${!in_paths[@]}"; do
     if [[ ! -e "${in_paths[$key]}" ]]; then
-        bash error_msg "file does not exist (${key}: ${in_paths[$key]})"
+        missing_str="${missing_str}\n\t${key}: ${in_paths[$key]}"
+        missing_paths+=("${in_paths[$key]}")
     fi
 done
-
+if [[ ${#missing_paths[@]} -gt 0 ]]; then
+    error_msg "\tfile(s) do not exist:${missing_str}"
+fi
