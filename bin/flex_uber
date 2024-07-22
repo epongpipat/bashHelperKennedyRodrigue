@@ -22,8 +22,8 @@ wave_list[pams]="all"
 root_dir=`get_root_dir kenrod`
 
 declare -A in_paths
-in_paths[preproc]="${root_dir}/software/scripts/eep170030/scripts.txt"
-in_paths[ids]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all_desc-sorted-by-study-sub-ses-scan.csv"
+in_paths[preproc]="${root_dir}/software/scripts/eep170030/script_sets.txt"
+in_paths[ids]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
 # in_paths[all_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
 # in_paths[jlbs_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-all.csv"
 # in_paths[jlbs_ses-01]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-01.csv"
