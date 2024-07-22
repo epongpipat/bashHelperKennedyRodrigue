@@ -20,3 +20,4 @@ Darwin,local,kenrod,/Volumes/kenrod
 Windows_NT,local,kmk,//smb.cvl.utdallas.edu/kennedy
 Windows_NT,local,kmr,//smb.cvl.utdallas.edu/rodrigue
 Windows_NT,local,kenrod,//smb.cvl.utdallas.edu/kenrod
+Linux,ganymede.utdallas.edu,kenrod,/home/${USER}/scratch/cvl/kenrod
