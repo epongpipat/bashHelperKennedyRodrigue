@@ -246,4 +246,12 @@ get_args_from_idx() {
     for i in `seq 0 $((${#columns[@]}-1))`; do
         eval "${columns[$i]}=${data[$i]}"
     done
+
+    if [[ ! -z ${ses} ]]; then
+        if [[ ${ses} =~ ^[0-9]+$ ]]; then
+            wave=${ses}
+            ses=`printf "%02d" ${ses}`
+        fi
+    fi
+
 }
