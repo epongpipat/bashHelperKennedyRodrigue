@@ -59,7 +59,7 @@ code_dir=`dirname $0`
 
 hostname=${HOSTNAME}
 
-if [[ ${hostname} =~ "compute" ]] || [[ ${hostname} == "login-01" ]] || [[ ${hostname} =~ 'vdi' ]]; then
+if [[ ${hostname} =~ "compute-" || ${hostname} == "login-01" || ${hostname} =~ 'vdi-' ]]; then
     hostname=`get_cluster_name`
 fi
 
@@ -70,7 +70,7 @@ elif [[ ${os} == 'Darwin' ]] || [[ ${os} == 'Windows_NT' ]]; then
 fi
 root_dir=`eval echo ${root_dir}`
 if [[ -z ${root_dir} ]]; then
-    error_msg "no root_dir found (os: ${os}; hostname: ${hostname})"
+    error_msg "no root_dir found (os: ${os}; HOSTNAME: ${HOSTNAME}, hostname: ${hostname})"
 elif [[ ! -e ${root_dir} ]]; then
     error_msg "file does not exist (${root_dir})"
 else
