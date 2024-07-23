@@ -233,7 +233,7 @@ root_dir=`get_root_dir kenrod`
 in_path="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
 
 get_args_from_idx() {
-    local idx=${1}
+    local idx=`echo ${1}+1 | bc`
 
     if [ -z ${idx} ]; then
         echo "Usage: get_args_from_idx <idx>"
