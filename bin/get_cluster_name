@@ -1,0 +1,32 @@
+#!/bin/bash
+
+declare -a in_paths
+in_paths+=("/etc/slurm/slurm.conf")
+in_paths+=("/var/spool/slurm/d/conf-cache/slurm.conf")
+
+conf_exists=0
+for i in ${!in_paths[@]}; do
+    if [[ -f ${in_paths[$i]} ]]; then
+        conf_exists=1
+        cluster_name=`cat ${in_paths[$i]} | grep -v '#' | grep ClusterName | awk -F= '{print $2}'`
+        break
+    fi
+done
+
+if [[ ${conf_exists} -eq 0 ]]; then
+    error_msg "slurm.conf not in found (${in_paths[@]})"
+    exit 1
+fi
+
+if [[ -z ${cluster_name} ]]; then
+    error_msg "ClusterName not found in slurm.conf (${in_paths[@]})"
+    exit 1
+fi
+
+if [[ ${cluster_name} =~ "ganymede" ]]; then
+    cluster_name="ganymede.utdallas.edu"
+elif [[ ${cluster_name} =~ "cortex" ]]; then
+    cluster_name="cortex.cvl.utdallas.edu"
+fi
+
+echo ${cluster_name}
