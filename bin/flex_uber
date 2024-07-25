@@ -231,6 +231,11 @@ echo "ids_idx: ${ids_idx}"
 # done
 # echo "ids_idx: ${ids_idx}"
 
+
+# extra_opts=0
+echo -en "\n[PROMPT] extra options? (enter number or hit enter to use default; default: none)\n"
+read -r extra_opts
+
 # ------------------------------------------------------------------------------
 # parallel
 # ------------------------------------------------------------------------------
@@ -313,6 +318,10 @@ cmd="flex_wrapper \
 --ids-idx ${ids_idx} \
 --overwrite ${overwrite} \
 --print 1"
+if [[ ! -z ${extra_opts} ]]; then
+    cmd="${cmd} \
+    --extra-opts ${extra_opts}"
+fi
 if [[ ${pe_idx} -gt 0 ]]; then
     cmd="${cmd} \
     --parallel ${pe_list[${pe_idx}]} \
