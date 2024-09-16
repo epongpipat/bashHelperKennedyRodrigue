@@ -235,6 +235,11 @@ echo "ids_idx: ${ids_idx}"
 # extra_opts=0
 echo -en "\n[PROMPT] extra options? (enter number or hit enter to use default; default: none)\n"
 read -r extra_opts
+if [[ -z ${extra_opts} ]]; then
+    extra_opts="''"
+else
+    extra_opts="'${extra_opts}'"
+fi
 
 # ------------------------------------------------------------------------------
 # parallel
@@ -293,7 +298,7 @@ fi
 # ------------------------------------------------------------------------------
 valid_opt=0
 while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] do you want to ovewrite output files (enter 0 or 1, or hit enter to use default; default: 0 [no])\n"
+    echo -en "\n[PROMPT] do you want to overwrite output files (enter 0 or 1, or hit enter to use default; default: 0 [no])\n"
     read -r overwrite
     if [[ -z ${overwrite} ]]; then
         overwrite=0
