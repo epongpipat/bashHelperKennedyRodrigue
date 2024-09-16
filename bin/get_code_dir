@@ -1,0 +1,7 @@
+#!/bin/bash
+
+code_dir=`dirname $0`
+if [[ ${code_dir} =~ '/var/spool/slurm/d' ]]; then
+    code_dir=${slurm_code_dir}
+fi
+echo ${code_dir}
