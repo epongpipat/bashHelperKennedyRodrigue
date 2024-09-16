@@ -72,7 +72,15 @@ root_dir=`eval echo ${root_dir}`
 if [[ -z ${root_dir} ]]; then
     error_msg "no root_dir found (os: ${os}; HOSTNAME: ${HOSTNAME}, hostname: ${hostname})"
 elif [[ ! -e ${root_dir} ]]; then
-    error_msg "file does not exist (${root_dir})"
+    if [[ ${os} == 'Darwin' ]]; then
+        root_dir=`echo ${root_dir} | sed "s|/Volumes|/Users/${USER}/mnt/cvl|g"`
+    fi
+
+    if [[ ! -e ${root_dir} ]]; then
+        error_msg "file does not exist (${root_dir})"
+    else 
+        echo "${root_dir}"
+    fi
 else
     echo "${root_dir}"
 fi
