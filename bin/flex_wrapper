@@ -202,9 +202,7 @@ fi
 check_file_type_crlf ${in_scripts}
 in_scripts=(`cat ${in_scripts}`)
 if [[ ${#in_scripts[@]} -eq 0 ]]; then
-    # echo -e "\n${color_red}error${color_default}: no scripts found in ${in_scripts}"
-    # exit 1
-    bash error_msg "no scripts found in ${in_scripts}"
+    error_msg "no scripts found in ${in_scripts}"
 fi
 
 if [[ ${scripts_idx} == "all" ]]; then
@@ -397,11 +395,6 @@ if [[ ${parallel} == 'slurm' ]]; then
             for j in ${!opts_key[@]}; do
                 opts_key_temp=`echo ${opts_key[${j}]} | tr -dc '[:alnum:]_\n\r'` # remove hidden characters
                 opts="${opts}--${opts_key_temp} ${opts_value[${j}]} "
-                # if [[ ${j} -eq 0 ]]; then
-                #     pe_job_name="${opts_key_temp}-${opts_value[${j}]}"
-                # else
-                #     pe_job_name="${pe_job_name}_${opts_key_temp}-${opts_value[${j}]}"
-                # fi
             done
             opts="${opts}--overwrite ${overwrite}"
             if [[ ! -z ${extra_opts} ]]; then
@@ -411,9 +404,7 @@ if [[ ${parallel} == 'slurm' ]]; then
             job_name="script-${script_name}_idx-${i1}"
 
             job_names[${c}]=${job_name}
-            # export slurm_code_dir=`dirname ${scripts[${s}]}`
             slurm_opts="${slurm_opts_default} --job-name=${job_name} --export=slurm_code_dir"
-            #slurm_opts="${slurm_opts_default} --job-name=${job_name}"
 
             if [[ ! -z ${parallel_opts} ]]; then
                 slurm_opts="${slurm_opts} ${parallel_opts}"
@@ -421,8 +412,6 @@ if [[ ${parallel} == 'slurm' ]]; then
 
             # slurm job limit
             if [[ ${parallel_job_limit} -gt 0 ]] && [[ ${c} -ge ${parallel_job_limit} ]]; then
-                # job_name_dependency=`echo ${job_id_list[$((c - parallel_job_limit))]}`
-                # job_id_dependency=`squeue --long --format="%i,%j" | grep ${job_name_dependency} | awk -F ',' '{print $1}'`
                 job_id_dependency=`echo ${job_ids[$((c - parallel_job_limit))]}`
                 slurm_opts="${slurm_opts} --dependency=afterany:${job_id_dependency}"
             fi
