@@ -116,6 +116,17 @@ parse_args() {
                 if [[ ${hemi} != 'L' ]] && [[ ${hemi} != 'R' ]]; then
                     error_msg "hemi must be L or R"
                 fi
+                if [[ ${hemi} == 'L' ]]; then
+                    hemisphere='left'
+                    Hemisphere='Left'
+                    hemi_alt='lh'
+                    hemi_opposite='R'
+                elif [[ ${hemi} == 'R' ]]; then
+                    hemisphere='right'
+                    Hemisphere='Right'
+                    hemi_alt='rh'
+                    hemi_opposite='L'
+                fi
                 opts="${opts} --hemi ${hemi}"
                 args_used+=("hemi")
                 shift 2
