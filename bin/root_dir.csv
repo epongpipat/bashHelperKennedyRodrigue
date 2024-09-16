@@ -2,9 +2,6 @@ os,hostname,dir,path
 Linux,cvlkrcompute1.utdallas.edu,kmk,/cvl/kennedy
 Linux,cvlkrcompute1.utdallas.edu,kmr,/cvl/rodrigue
 Linux,cvlkrcompute1.utdallas.edu,kenrod,/cvl/kenrod
-Linux,cvlkrcompute2.utdallas.edu,kmk,/cvl/kennedy
-Linux,cvlkrcompute2.utdallas.edu,kmr,/cvl/rodrigue
-Linux,cvlkrcompute2.utdallas.edu,kenrod,/cvl/kenrod
 Linux,cortex.cvl.utdallas.edu,kmk,/mfs/cvl/groups/kennedy
 Linux,cortex.cvl.utdallas.edu,kmr,/mfs/cvl/groups/rodrigue
 Linux,cortex.cvl.utdallas.edu,kenrod,/mfs/cvl/groups/kenrod
@@ -15,4 +12,3 @@ Windows_NT,local,kmk,//smb.cvl.utdallas.edu/kennedy
 Windows_NT,local,kmr,//smb.cvl.utdallas.edu/rodrigue
 Windows_NT,local,kenrod,//smb.cvl.utdallas.edu/kenrod
 Linux,ganymede.utdallas.edu,kenrod,/home/${USER}/scratch/cvl/kenrod
-
