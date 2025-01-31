@@ -96,18 +96,15 @@ date_str=`date +%Y-%m-%d`
 datetime=`date +%Y-%m-%dT%H:%M:%S%z`
 
 # slurm
-slurm_pwd="${root_dir}/server/logs/${USER}/${date_str}"
+logs_pwd="${root_dir}/server/logs/${USER}/${date_str}"
 # slurm_opts_default="--partition=kenrod \
 # --mail-type=FAIL \
 # -D ${slurm_pwd}"
 
-slurm_opts_default="--partition=kenrod \
--D ${slurm_pwd}"
+slurm_opts_default=""
 
 # sge
-sge_opts_default="-j y \
--m a \
--M ${USER}@utdallas.edu"
+sge_opts_default=""
 
 # ------------------------------------------------------------------------------
 # parse args
@@ -312,7 +309,9 @@ fi
 # parallel: sge
 # ------------------------------------------------------------------------------
 if [[ ${parallel} == 'sge' ]]; then
-    
+    if [[ ! -d ${logs_pwd} ]]; then
+        mkdir -p ${logs_pwd}
+    fi
     echo -e "\nscript_idx,id_idx,${id_cols_alt}"
     module load sge
     declare -a job_id_list
@@ -374,8 +373,8 @@ fi
 # parallel: slurm
 # ------------------------------------------------------------------------------
 if [[ ${parallel} == 'slurm' ]]; then
-    if [[ ! -d ${slurm_pwd} ]]; then
-        mkdir -p ${slurm_pwd}
+    if [[ ! -d ${logs_pwd} ]]; then
+        mkdir -p ${logs_pwd}
     fi
     echo -e "\nscript_idx,id_idx,${id_cols_alt}"
     declare -a job_ids
