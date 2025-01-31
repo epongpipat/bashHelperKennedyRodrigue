@@ -16,6 +16,68 @@ declare -A wave_list
 wave_list[jlbs]="all 1 2 3"
 wave_list[pams]="all"
 
+date_str=`date +%Y-%m-%d`
+logs_pwd="${root_dir}/server/logs/${USER}/${date_str}"
+
+declare -a slurm_opts
+# slurm_opts[0]="''"
+slurm_opts[1]="--nodes=1 \
+--ntasks=1 \
+--cpus-per-task=1 \
+--mem=4G \
+--partition=kenrod \
+--output=jid-%A_jname-%x.log \
+--time=0-08:00:00 \
+--export=NONE \
+-D ${logs_pwd}"
+slurm_opts[2]="--nodes=1 \
+--ntasks=1 \
+--cpus-per-task=1 \
+--mem=8G \
+--partition=kenrod \
+--output=jid-%A_jname-%x.log \
+--time=0-08:00:00 \
+--export=NONE \
+-D ${logs_pwd}"
+slurm_opts[3]="--nodes=1 \
+--ntasks=1 \
+--cpus-per-task=1 \
+--mem=4G \
+--partition=kenrod \
+--nodelist=compute-02 \
+--output=jid-%A_jname-%x.log \
+--time=0-08:00:00 \
+--export=NONE \
+-D ${logs_pwd}"
+
+declare -a slurm_opts_desc
+# slurm_opts_desc[0]="[none]"
+slurm_opts_desc[1]="[default]"
+slurm_opts_desc[2]="[8GB mem]"
+slurm_opts_desc[3]="[gpu]\t"
+
+# slurm_opts_desc[4]="[compute-02]"
+
+# slurm_opts+=("custom")
+
+# slurm_default_opts="--nodes=1 \
+# --ntasks=1 \
+# --cpus-per-task=1 \
+# --mem=4G \
+# --partition=kenrod \
+# --output=jid-%A_jname-%x.log \
+# --time=0-08:00:00 \
+# --export=NONE \
+# -D ${logs_pwd}"
+
+# sge_default_opts="-V \
+# -S /bin/bash \
+# -o jid-\$JOB_ID-\$TASK_ID_jname-\$JOB_NAME.log \
+# -j y"
+
+sge_default_opts="-j y \
+-wd ${logs_pwd}"
+
 # ------------------------------------------------------------------------------
 # paths
 # ------------------------------------------------------------------------------
@@ -39,18 +101,18 @@ in_scripts=(`cat ${in_paths[preproc]} | sort`)
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# script set
+# pipelines
 # ------------------------------------------------------------------------------
 echo ""
 warning_msg "please choose carefully, options are likely to change"
-echo -e "\nscript sets (sorted):"
+echo -e "\npipelines (sorted):"
 for i in ${!in_scripts[@]}; do
     i_str=$((i+1))
     echo -e "\t${i_str}:\t${in_scripts[$i]}"
 done
 valid_opt=0
 while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] which script set do you want to run? (enter index number)\n"
+    echo -en "\n[PROMPT] which pipeline do you want to run? (enter index number)\n"
     read -r scripts_idx
     if [[ ${scripts_idx} -gt ${#in_scripts[@]} ]]; then
         warning_msg "not a valid script index (${scripts_idx})"
@@ -190,11 +252,23 @@ for i in ${!in_ids[@]}; do
     i_str=`echo ${in_ids[$i]} | awk -F, '{print $1}'`
     echo -e "\t${i_str}:\t${in_ids[i]}"
 done
+
+# \n\toptions:\n\t\tall\n\t\ttest-1\n\t\ttest-3
 echo -en "\n[PROMPT] which subjects do you want to run? (enter index number or hit enter to use default; default: all)\n"
 read -r ids_idx
 if [[ -z ${ids_idx} ]]; then
     echo "ids_idx: all"
     ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
+elif [[ ${ids_idx} == 'test-1' ]]; then
+    echo "ids_idx: test-1"
+    ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
+    ids_idx=(`echo ${ids_idx} | tr ',' ' '`)
+    ids_idx=${ids_idx[0]}
+elif [[ ${ids_idx} == 'test-3' ]]; then
+    echo "ids_idx: test-3"
+    ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
+    ids_idx=(`echo ${ids_idx} | tr ',' ' '`)
+    ids_idx="${ids_idx[0]},${ids_idx[1]},${ids_idx[2]}"
 fi
 echo "ids_idx: ${ids_idx}"
 
@@ -276,10 +350,28 @@ if [[ ${pe_idx} -gt 0 ]]; then
     echo -e "\nBefore running parallel jobs using the parallel engine, please consider the following:"
     echo -e "- please ensure that the parallel settings are properly configured in the script. for more details, please see the following link:\n\thttps://kennedy-rodrigue-wiki.readthedocs.io/en/latest/server.html#parallel-jobs"
     echo -e "- please test a single subject first to ensure the job is running as expected"
-    echo -en "\n[PROMPT] parallel opts? (enter additioanl parallel engine options or hit enter to use default; default: none)\n"
+    echo -e "\nparallel engine arguments:\n\t0:\tnone"
+    if [[ ${pe_idx} -eq 1 ]]; then
+        echo -e "${pe_opts_str}\t1:\t${sge_default_opts}"
+    elif [[ ${pe_idx} -eq 2 ]]; then
+        for i in ${!slurm_opts[@]}; do
+            echo -e "\t${i}:\t${slurm_opts_desc[$i]}\t${slurm_opts[$i]}"
+        done
+        # echo -e "${pe_opts_str}\t1:\t${slurm_default_opts}"
+    fi
+    echo -en "\n[PROMPT] parallel opts? (enter additional parallel engine arguments, use one of the predefined options, or hit enter to use the default option; default: 1) \n"
     read -r pe_opts
 fi
-if [[ -z ${pe_opts} ]]; then
+
+if [[ ${pe_idx} -eq 1 ]] && [[ -z ${pe_opts} ]]; then
+    pe_opts="'${sge_default_opts}'"
+elif [[ ${pe_idx} -eq 1 ]] && [[ ${pe_opts} -eq 1 ]]; then
+    pe_opts="'${sge_default_opts}'"
+elif [[ ${pe_idx} -eq 2 ]] && [[ -z ${pe_opts} ]]; then
+    pe_opts="'${slurm_opts[1]}'"
+elif [[ ${pe_idx} -eq 2 ]] && [[ ${pe_opts} -lt ${#slurm_opts[@]} ]]; then
+    pe_opts="'${slurm_opts[${pe_opts}]}'"
+elif [[ ${pe_opts} -eq 0 ]]; then
     pe_opts="''"
 else
     pe_opts="'${pe_opts}'"
@@ -321,8 +413,7 @@ cmd="flex_wrapper \
 --in-ids ${in_paths[ids]} \
 --scripts-idx ${script_idx} \
 --ids-idx ${ids_idx} \
---overwrite ${overwrite} \
---print 1"
+--overwrite ${overwrite}"
 if [[ ! -z ${extra_opts} ]]; then
     cmd="${cmd} \
     --extra-opts ${extra_opts}"
@@ -333,6 +424,8 @@ if [[ ${pe_idx} -gt 0 ]]; then
     --parallel-opts ${pe_opts} \
     --parallel-job-limit ${pe_job_limit}"
 fi
+cmd="${cmd} \
+--print 1"
 echo -e "\ncommand:\n${cmd}\n"
 eval ${cmd}
 
@@ -342,7 +435,7 @@ eval ${cmd}
 cmd=`echo ${cmd} | sed 's/--print 1/--print 0/'`
 valid_opt=0
 while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] ok to run? (enter 0 or 1, or hit enter to use default; default: 0)\n"
+    echo -en "\n[PROMPT] ok to run? (enter 0 or 1, or hit enter to use default; default: 0 [no])\n"
     read -r run
     if [[ ${run} -eq 0 ]] || [[ ${run} -eq 1 ]]; then
         valid_opt=1
