@@ -86,15 +86,8 @@ root_dir=`get_root_dir kenrod`
 declare -A in_paths
 in_paths[preproc]="${root_dir}/software/scripts/eep170030/script_sets.txt"
 in_paths[ids]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
-# in_paths[all_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
-# in_paths[jlbs_ses-all]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-all.csv"
-# in_paths[jlbs_ses-01]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-01.csv"
-# in_paths[jlbs_ses-02]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-02.csv"
-# in_paths[jlbs_ses-03]="${root_dir}/software/scripts/eep170030/ids_long-format_study-jlbs_ses-03.csv"
-# in_paths[pams]="${root_dir}/software/scripts/eep170030/ids_long-format_study-pams_ses-all.csv"
 
 in_scripts=(`cat ${in_paths[preproc]} | sort`)
-# out_path="/Volumes/kenrod/software/scripts/eep170030/study-pams/mri/flex_uber.sh"
 
 # ------------------------------------------------------------------------------
 # main
@@ -110,26 +103,15 @@ for i in ${!in_scripts[@]}; do
     i_str=$((i+1))
     echo -e "\t${i_str}:\t${in_scripts[$i]}"
 done
-valid_opt=0
-while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] which pipeline do you want to run? (enter index number)\n"
-    read -r scripts_idx
-    if [[ ${scripts_idx} -gt ${#in_scripts[@]} ]]; then
-        warning_msg "not a valid script index (${scripts_idx})"
-        continue
-    elif [[ ${scripts_idx} -lt 1 ]]; then
-        warning_msg "not a valid script index (${scripts_idx})"
-        continue
-    elif [[ ! ${scripts_idx} =~ ^[0-9]+$ ]]; then
-        warning_msg "not a valid script index (${scripts_idx})"
-        continue
-    else
-        valid_opt=1
-    fi
-done
+scripts_idx_opts=`seq 1 $((${#in_scripts[@]}))`
+scripts_idx=$(get_valid_input \
+-p "which pipeline do you want to run? (enter index number)" \
+-o ${scripts_idx_opts} \
+-e 0)
+
 scripts_idx1=${scripts_idx}
 scripts_idx=$((scripts_idx-1))
-echo "${scripts_idx1}: ${in_scripts[$scripts_idx]}"
+echo -e "pipeline[${scripts_idx1}]:\t${in_scripts[$scripts_idx]}"
 
 # ------------------------------------------------------------------------------
 # script
@@ -144,25 +126,15 @@ for i in ${!in_script[@]}; do
     i_str=$((i+1))
     echo -e "\t${i_str}:\t${in_script[i]}"
 done
-valid_opt=0
-while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] which script do you want to run? (enter index number)\n"
-    read -r script_idx
-    if [[ ${script_idx} -gt ${#in_script[@]} ]]; then
-        warning_msg "not a valid script index (${script_idx})"
-        continue
-    elif [[ ${script_idx} -lt 1 ]]; then
-        warning_msg "not a valid script index (${script_idx})"
-        continue
-    elif [[ ! ${script_idx} =~ ^[0-9]+$ ]]; then
-        warning_msg "not a valid script index (${script_idx})"
-        continue
-    else
-        valid_opt=1
-    fi
-done
+script_idx_opts=`seq 1 $((${#in_script[@]}))`
+script_idx=$(get_valid_input \
+-p "which script do you want to run? (enter index number)" \
+-o ${script_idx_opts} \
+-e 0)
+
+
 scripts_idx_tmp=$((script_idx-1))
-echo "${script_idx}: ${in_script[$scripts_idx_tmp]}"
+echo -e "script[${script_idx}]:\t${in_script[$scripts_idx_tmp]}"
 
 # ------------------------------------------------------------------------------
 # study
@@ -171,30 +143,14 @@ echo -e "\nstudies:"
 for i in ${!study_list[@]}; do
     echo -e "\t${i}:\t${study_list[i]}"
 done
-valid_opt=0
-while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] which study do you want to run? (enter index number or hit enter to use default; default: 0 [all])\n"
-    read -r study_idx
-    n_studies=${#study_list[@]}
-    # n_studies=$((n_studies-1))
-    if [[ -z ${study_idx} ]]; then
-        study_idx=0
-        valid_opt=1
-    elif [[ ${study_idx} -gt ${n_studies} ]]; then
-        warning_msg "not a valid study index (${study_idx})"
-        continue
-    elif [[ ${study_idx} -lt 0 ]]; then
-        warning_msg "not a valid study index (${study_idx})"
-        continue
-    elif [[ ! ${study_idx} =~ ^[0-9]+$ ]]; then
-        warning_msg "not a valid study index (${study_idx})"
-        continue
-    else
-        valid_opt=1
-    fi
-done
-echo "${study_idx}: ${study_list[$study_idx]}"
+study_idx_opts=`seq 0 $((${#study_list[@]}-1))`
+study_idx=$(get_valid_input \
+-p "which study do you want to run? (enter index number or hit enter to use default; default: 0 [all])" \
+-o ${study_idx_opts} \
+-e 1 \
+-d 0)
 study=${study_list[$study_idx]}
+echo -e "study[${study_idx}]:\t${study}"
 
 # ------------------------------------------------------------------------------
 # session
@@ -203,7 +159,6 @@ echo -e "\nsessions:"
 ses_list=(`echo ${wave_list[${study}]}`)
 if [[ ${study} == 'all' ]]; then
     ses_list=(`echo ${wave_list[jlbs]} ${wave_list[pams]}`)
-    valid_opt=1
     ses_idx=0
 elif [[ ${#ses_list[@]} -lt 1 ]]; then
     error_msg "no sessions found for ${study}"
@@ -211,35 +166,18 @@ else
     for i in ${!ses_list[@]}; do
         echo -e "\t${i}:\t${ses_list[$i]}"
     done
-    valid_opt=0
+    ses_idx_opts=`seq 0 $((${#ses_list[@]}-1))`
+    ses_idx=$(get_valid_input \
+    -p "which session do you want to run? (enter index number or hit enter to use default; default: 0 [all])" \
+    -o ${ses_idx_opts} \
+    -e 1 \
+    -d 0)
 fi
-while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] which session do you want to run? (enter index number or hit enter to use default; default: 0 [all])\n"
-    read -r ses_idx
-    if [[ -z ${ses_idx} ]]; then
-        ses_idx=0
-        valid_opt=1
-    elif [[ ${ses_idx} -gt ${#ses_list[@]} ]]; then
-        warning_msg "not a valid session index (${ses_idx})"
-        continue
-    elif [[ ${ses_idx} -lt 0 ]]; then
-        warning_msg "not a valid session index (${ses_idx})"
-        continue
-    elif [[ ! ${ses_idx} =~ ^[0-9]+$ ]]; then
-        warning_msg "not a valid session index (${ses_idx})"
-        continue
-    else
-        valid_opt=1
-    fi
-done
-echo "${ses_idx}: ${ses_list[$ses_idx]}"
+echo "session[${ses_idx}]: ${ses_list[$ses_idx]}"
 ses=${ses_list[$ses_idx]}
 if [[ ${ses} =~ ^[0-9]$ ]]; then
     ses=`printf "%02d" ${ses}`
 fi
-echo "ses: ${ses}"
-# study="${study}_ses-${ses}"
-# echo "study: ${study}"
 
 # ------------------------------------------------------------------------------
 # ids using filter
@@ -248,15 +186,26 @@ in_ids=(`filter_ids --study ${study} --ses ${ses}`)
 if [[ ${#in_ids[@]} -lt 1 ]]; then
     error_msg "no ids found for ${study}"
 fi
+echo ""
+ids_idx_opts=()
 for i in ${!in_ids[@]}; do
     i_str=`echo ${in_ids[$i]} | awk -F, '{print $1}'`
+    ids_idx_opts+=(${i_str})
     echo -e "\t${i_str}:\t${in_ids[i]}"
 done
+echo -e "\tall:\tall"
+echo -e "\ttest-1:\ttest first subject"
+echo -e "\ttest-3:\ttest first three subjects"
 
-# \n\toptions:\n\t\tall\n\t\ttest-1\n\t\ttest-3
-echo -en "\n[PROMPT] which subjects do you want to run? (enter index number or hit enter to use default; default: all)\n"
+# note: can't use get_valid_input because of the comma and semicolon input options
+echo -en "\n[PROMPT]\twhich subjects do you want to run? (enter index number or hit enter to use default; default: all)\n"
 read -r ids_idx
 if [[ -z ${ids_idx} ]]; then
+    echo "ids_idx: all"
+    ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
+fi
+
+if [[ ${ids_idx} == 'all' ]]; then
     echo "ids_idx: all"
     ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
 elif [[ ${ids_idx} == 'test-1' ]]; then
@@ -273,82 +222,37 @@ fi
 echo "ids_idx: ${ids_idx}"
 
 # ------------------------------------------------------------------------------
-# ids original
+# extra options
 # ------------------------------------------------------------------------------
-# echo -e "\nids:"
-# in_ids=(`cat ${in_paths[${study}]}`)
-# if [[ ${#in_ids[@]} -lt 1 ]]; then
-#     error_msg "no ids found for ${study}"
-# fi
-# for i in ${!in_ids[@]}; do
-#     echo -e "\t${i}:\t${in_ids[i]}"
-# done
-# valid_opt=0
-# while [[ ${valid_opt} -eq 0 ]]; do
-#     echo -en "\n[PROMPT] which ids do you want to run? (enter index number or hit enter to use default; default: all)\n"
-#     read -r ids_idx
-#     if [[ -z ${ids_idx} ]]; then
-#         ids_idx="all"
-#         valid_opt=1
-#     elif [[ ${ids_idx} -gt ${#in_ids[@]} ]]; then
-#         warning_msg "not a valid ids index (${ids_idx})"
-#         continue
-#     elif [[ ${ids_idx} -lt 0 ]]; then
-#         warning_msg "not a valid ids index (${ids_idx})"
-#         continue
-#     elif [[ ! ${ids_idx} =~ ^[0-9]+$ ]]; then
-#         warning_msg "not a valid ids index (${ids_idx})"
-#         continue
-#     else
-#         valid_opt=1
-#     fi
-# done
-# echo "ids_idx: ${ids_idx}"
-
-
-# extra_opts=0
-echo -en "\n[PROMPT] extra options? (enter number or hit enter to use default; default: none)\n"
+echo -en "\n[PROMPT]\textra options? (enter number or hit enter to use default; default: none)\n"
 read -r extra_opts
-if [[ -z ${extra_opts} ]]; then
+if [[ -z ${extra_opts} ]] || [[ ${extra_opts} == 'none' ]]; then
     extra_opts="''"
 else
     extra_opts="'${extra_opts}'"
 fi
+echo -e "extra_opts:\t${extra_opts}"
 
 # ------------------------------------------------------------------------------
 # parallel
 # ------------------------------------------------------------------------------
-echo -e "\nparallel engine options:"
+echo -e "\nparallel engines:"
 pe_list=(0 sge slurm)
 for i in ${!pe_list[@]}; do
     echo -e "\t${i}:\t${pe_list[i]}"
 done
+pe_idx_opts=`seq 0 $((${#pe_list[@]}-1))`
+pe_idx=$(get_valid_input \
+-p "which parallel environment do you want to run? (enter index number or hit enter to use default; default: 0 [none])" \
+-o ${pe_idx_opts} \
+-e 1 \
+-d 0)
 
-valid_opt=0
-while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] which parallel environment do you want to run? (enter index number or hit enter to use default; default: 0 [none])\n"
-    read -r pe_idx
-    if [[ -z ${pe_idx} ]]; then
-        pe_idx=0
-        valid_opt=1
-    elif [[ ${pe_idx} -gt ${#pe_list[@]} ]]; then
-        warning_msg "not a valid parallel environment index (${pe_idx})"
-        continue
-    elif [[ ${pe_idx} -lt 0 ]]; then
-        warning_msg "not a valid parallel environment index (${pe_idx})"
-        continue
-    elif [[ ! ${pe_idx} =~ ^[0-9]+$ ]]; then
-        warning_msg "not a valid parallel environment index (${pe_idx})"
-        continue
-    else
-        valid_opt=1
-    fi
-done
-echo "${pe_idx}: ${pe_list[$pe_idx]}"
+echo "parellel engine[${pe_idx}]: ${pe_list[$pe_idx]}"
 
 if [[ ${pe_idx} -gt 0 ]]; then
     echo -e "\nBefore running parallel jobs using the parallel engine, please consider the following:"
-    echo -e "- please ensure that the parallel settings are properly configured in the script. for more details, please see the following link:\n\thttps://kennedy-rodrigue-wiki.readthedocs.io/en/latest/server.html#parallel-jobs"
+    echo -e "- please ensure that the parallel settings are properly configured in the script, especially if using none. for more details, please see the following link:\n\thttps://kennedy-rodrigue-wiki.readthedocs.io/en/latest/server.html#parallel-jobs"
     echo -e "- please test a single subject first to ensure the job is running as expected"
     echo -e "\nparallel engine arguments:\n\t0:\tnone"
     if [[ ${pe_idx} -eq 1 ]]; then
@@ -359,54 +263,53 @@ if [[ ${pe_idx} -gt 0 ]]; then
         done
         # echo -e "${pe_opts_str}\t1:\t${slurm_default_opts}"
     fi
-    echo -en "\n[PROMPT] parallel opts? (enter additional parallel engine arguments, use one of the predefined options, or hit enter to use the default option; default: 1) \n"
+    echo -en "\n[PROMPT]\tparallel opts? (enter additional parallel engine arguments, use one of the predefined options, or hit enter to use the default option; default: 1) \n"
     read -r pe_opts
+
+    if [[ ${pe_idx} -eq 1 ]] && [[ -z ${pe_opts} ]]; then
+    pe_opts="'${sge_default_opts}'"
+    elif [[ ${pe_idx} -eq 1 ]] && [[ $(is_numeric ${pe_opts}) -eq 1 ]]; then
+        if [[ ${pe_opts} -gt ${#sge_opts[@]} ]]; then
+            warning_msg "not a valid sge option (${pe_opts}), using default (1)"
+            pe_opts="'${sge_default_opts}'"
+        fi
+    elif [[ ${pe_idx} -eq 2 ]] && [[ -z ${pe_opts} ]]; then
+        pe_opts="'${slurm_opts[1]}'"
+    elif [[ ${pe_idx} -eq 2 ]] && [[ $(is_numeric ${pe_opts}) -eq 1 ]]; then
+        if [[ ${pe_opts} -gt ${#slurm_opts[@]} ]]; then
+            warning_msg "not a valid slurm option (${pe_opts}), using default (1)"
+            pe_opts="'${slurm_opts[1]}'"
+        fi
+    else
+        pe_opts="'${pe_opts}'"
+    fi
+    echo -e "parallel opts:\t${pe_opts}"
 fi
 
-if [[ ${pe_idx} -eq 1 ]] && [[ -z ${pe_opts} ]]; then
-    pe_opts="'${sge_default_opts}'"
-elif [[ ${pe_idx} -eq 1 ]] && [[ ${pe_opts} -eq 1 ]]; then
-    pe_opts="'${sge_default_opts}'"
-elif [[ ${pe_idx} -eq 2 ]] && [[ -z ${pe_opts} ]]; then
-    pe_opts="'${slurm_opts[1]}'"
-elif [[ ${pe_idx} -eq 2 ]] && [[ ${pe_opts} -lt ${#slurm_opts[@]} ]]; then
-    pe_opts="'${slurm_opts[${pe_opts}]}'"
-elif [[ ${pe_opts} -eq 0 ]]; then
-    pe_opts="''"
-else
-    pe_opts="'${pe_opts}'"
-fi
 
 if [[ ${pe_idx} -gt 0 ]]; then
-    echo -en "\n[PROMPT] parallel job limit? (enter number or hit enter to use default; default: 0)\n"
-    read -r pe_job_limit
-fi
-if [[ -z ${pe_job_limit} ]]; then
-    pe_job_limit=0
+    pe_job_limit_opts=`seq 0 32`
+    pe_job_limit=$(get_valid_input \
+    -p "parallel job limit? (enter number or hit enter to use default; default: 0)" \
+    -o ${pe_job_limit_opts} \
+    -e 1 \
+    -d 0)
+    echo -e "parallel job limit: ${pe_job_limit}"
 fi
 
 # ------------------------------------------------------------------------------
 # overwrite
 # ------------------------------------------------------------------------------
-valid_opt=0
-while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] do you want to overwrite output files (enter 0 or 1, or hit enter to use default; default: 0 [no])\n"
-    read -r overwrite
-    if [[ -z ${overwrite} ]]; then
-        overwrite=0
-        valid_opt=1
-    elif [[ ${overwrite} -eq 0 ]] || [[ ${overwrite} -eq 1 ]]; then
-        valid_opt=1
-    else
-        warning_msg "not a valid overwrite value (${overwrite})"
-    fi
-done
-echo "overwrite: ${overwrite}"
+overwrite=$(get_valid_input \
+-p "do you want to overwrite output files? (enter 0 or 1 or hit enter to use default; default: 0 [no])" \
+-o 0 1 \
+-e 1 \
+-d 0)
+echo -e "overwrite:\t${overwrite}"
 
 # ------------------------------------------------------------------------------
 # cmd
 # ------------------------------------------------------------------------------
-# --in-ids ${in_paths[${study}]} \
 in_script_run=`eval echo ${in_scripts[scripts_idx]}`
 cmd="flex_wrapper \
 --in-scripts ${in_script_run} \
@@ -427,23 +330,20 @@ fi
 cmd="${cmd} \
 --print 1"
 echo -e "\ncommand:\n${cmd}\n"
-eval ${cmd}
+eval ${cmd} | head -n 100
+echo -e "...\n[INFO]\t\tdisplaying only the first 100 lines"
 
 # ------------------------------------------------------------------------------
 # execute
 # ------------------------------------------------------------------------------
 cmd=`echo ${cmd} | sed 's/--print 1/--print 0/'`
-valid_opt=0
-while [[ ${valid_opt} -eq 0 ]]; do
-    echo -en "\n[PROMPT] ok to run? (enter 0 or 1, or hit enter to use default; default: 0 [no])\n"
-    read -r run
-    if [[ ${run} -eq 0 ]] || [[ ${run} -eq 1 ]]; then
-        valid_opt=1
-    else
-        echo -en "\n[PROMPT] not a valid run value (${run}), please enter 0 or 1\n"
-        read -r run
-    fi
-done
+run=$(get_valid_input \
+-p "ok to run? (enter 0 or 1 or hit enter to use default; default: 0 [no])" \
+-o 0 1 \
+-e 1 \
+-d 0)
+echo -e "run:\t${run}"
+
 if [[ ${run} -eq 1 ]]; then
     eval ${cmd}
 else
