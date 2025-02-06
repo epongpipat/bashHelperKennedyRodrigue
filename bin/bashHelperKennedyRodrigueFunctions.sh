@@ -266,3 +266,102 @@ get_args_from_idx() {
     fi
 
 }
+
+# ------------------------------------------------------------------------------
+# get valid input
+# ------------------------------------------------------------------------------
+get_valid_input() {
+    local usage_str prompt opts default allow_empty input valid=0 missing_args=()
+
+    # usage
+    usage_str="\nUsage: $0 -p <prompt> -o <options> [-e <allow_empty>] \
+    \n\t-p <prompt>\t\tprompt message (required) \
+    \n\t-o <options>\t\tvalid option(s) separated by space (required) \
+    \n\t-d <default>\t\tdefault value (optional) \
+    \n\t-e <0|1>\t\tallow empty input (0: false [default], 1: true)\n"
+
+
+    if [ $# -eq 0 ]; then
+        echo -e "${usage_str}"
+        return 1
+    fi
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -p)
+          prompt=$2
+          shift 2
+          ;;
+        -o)
+          opts=()
+          while [[ $2 != -* ]] && [[ $# -gt 0 ]]; do
+              opts+=("$2")
+              shift
+          done
+          shift
+          ;;
+        -d)
+          default=$2
+          shift 2
+          ;;
+        -e)
+          allow_empty=$2
+          shift 2
+          ;;
+        *)
+          echo -e "${usage_str}"
+          echo "[ERROR] Invalid option: $1"
+          return 1
+          ;;
+      esac
+    done
+
+    # Argument validation
+    if [[ -z $prompt ]]; then
+        missing_args+=("-p <prompt> is required")
+    fi
+    if [[ -z $opts ]]; then
+        missing_args+=("-o <opts> is required")
+    fi
+    
+
+    if [[ ${#missing_args[@]} -gt 0 ]]; then
+        echo "[ERROR] Missing arguments:"
+        for msg in "${missing_args[@]}"; do echo "  $msg"; done
+        return 1
+    fi
+
+    if [[ $allow_empty -ne 0 && $allow_empty -ne 1 ]]; then
+        echo "[ERROR] -e allow_empty must be 0 or 1"
+        return 1
+    fi
+
+    # Prompt loop
+    valid=0
+    prompt_str="\n[PROMPT]\t${prompt}\n "
+    read -rp "$(printf "${prompt_str}")" input
+    while [ $valid -eq 0 ]; do
+        if [[ -z "$input" && $allow_empty -eq 0 ]]; then
+            prompt_str="\n[WARNING]\tinvalid input (valid options: ${opts[*]})\n[PROMPT]\t${prompt}\n "
+            read -rp "$(printf "${prompt_str}")" input
+            continue
+        elif [[ -z "$input" && $allow_empty -eq 1 ]]; then
+            input=${default:-""}
+            valid=1
+            break
+        fi
+        for opt in "${opts[@]}"; do
+            if [[ "$input" == "$opt" ]]; then
+                valid=1
+                break
+            fi
+        done
+        if [[ $valid -eq 0 ]]; then
+            prompt_str="\n[WARNING]\tinvalid input (valid options: ${opts[*]})\n[PROMPT]\t${prompt}\n "
+            read -rp "$(printf "${prompt_str}")" input
+        fi
+    done
+
+    echo "$input"  # Return the valid input
+}
