@@ -3,6 +3,7 @@
 set -e
 
 declare -a args_order
+args_order+=("lab")
 args_order+=("study")
 args_order+=("sub")
 args_order+=("ses")
@@ -19,6 +20,7 @@ args_order+=("print")
 args_order+=("help")
 
 declare -A help
+help[lab]="lab name (e.g., kenrod, kennedy, rodrigue)"
 help[study]="study id"
 help[sub]="subject label"
 help[ses]="session/wave label"
@@ -72,6 +74,12 @@ parse_args() {
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --lab)
+                lab=$2
+                lab_uc=`echo ${lab} | tr '[:lower:]' '[:upper:]'`
+                opts="${opts} --lab ${lab}"
+                shift 2
+                ;;
             --study)
                 study=$2
                 study_uc=`echo ${study} | tr '[:lower:]' '[:upper:]'`
@@ -80,6 +88,7 @@ parse_args() {
                 ;;
             --sub)
                 sub=$2
+                sub_uc=`echo ${sub} | tr '[:lower:]' '[:upper:]'`
                 opts="${opts} --sub ${sub}"
                 shift 2
                 ;;
@@ -138,7 +147,8 @@ parse_args() {
                 ;;
             --airc_id|--airc-id)
                 airc_id=$2
-                airc_id_number=`echo ${airc_id} | sed 's/3tb//g'`
+                airc_id_number=`echo ${airc_id} | sed 's/3tb//g' | sed 's/7t//g'`
+                airc_id_uc=`echo ${airc_id} | tr '[:lower:]' '[:upper:]'`
                 opts="${opts} --airc_id ${airc_id}"
                 shift 2
                 ;;
@@ -155,6 +165,7 @@ parse_args() {
                 if [[ $date -gt $(date +%Y%m%d) ]]; then
                     error_msg "date must be today's date or a past date"
                 fi
+                date_mmddyyyy="${date:4:4}${date:0:4}"
                 opts="${opts} --date ${date}"
                 shift 2
                 ;;
