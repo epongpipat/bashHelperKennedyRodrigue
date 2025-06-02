@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -z "${1}" ]; then
+    echo -e "\nusage: section_msg \"<message>\"\n"
+    exit 1
+fi
+
+if [[ ${#@} -gt 1 ]]; then
+    echo -e "\nerror: only one argument allowed. please wrap message in quotes\n"
+    exit 1
+fi
+
+echo -e "\n--------------------------------------------------------------------------------"
+echo -e " ${1}"
+echo -e "--------------------------------------------------------------------------------\n"
