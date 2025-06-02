@@ -16,8 +16,8 @@ usage() {
 
         <dir>
             directory name. can be one of the following:
-                kmk
-                kmr
+                kmk|kennedy
+                kmr|rodrigue
                 kenrod
 
 
@@ -42,7 +42,7 @@ if [[ $1 == "-h" || $1 == "--help" ]]; then
     exit 0
 fi
 
-dir_list=(kmk kmr kenrod)
+dir_list=(kmk kmr kenrod kennedy rodrigue)
 if [[ ! " ${dir_list[@]} " =~ " $1 " ]]; then
     # echo "error: unknown argument ($1)"
     usage
@@ -50,6 +50,12 @@ if [[ ! " ${dir_list[@]} " =~ " $1 " ]]; then
 fi
 
 dir=$1
+
+if [[ ${dir} == 'kmk' ]]; then
+    dir='kennedy'
+elif [[ ${dir} == 'kmr' ]]; then
+    dir='rodrigue'
+fi
 
 # ------------------------------------------------------------------------------
 # main
@@ -59,7 +65,7 @@ code_dir=`dirname $0`
 
 hostname=${HOSTNAME}
 
-if [[ ${hostname} =~ "compute-" || ${hostname} == "login-01" || ${hostname} =~ 'vdi-' ]]; then
+if [[ ${hostname} =~ "compute-" || ${hostname} =~ "login-" || ${hostname} =~ 'vdi-' ]]; then
     hostname=`get_cluster_name`
 fi
 
