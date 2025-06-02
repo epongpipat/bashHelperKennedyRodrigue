@@ -34,7 +34,14 @@ paths=${@}
 # main
 # ------------------------------------------------------------------------------
 for path in ${paths[@]}; do
+
+    if [[ ! -e ${path} ]]; then
+        warning_msg "skipping, path does not exist\n\t path:\t${path}"
+        continue
+    fi
+
     path_user=`ls -ld ${path} | awk '{print $3}'`
+
     if [[ ${path_user} != ${USER} ]]; then
         warning_msg "skipping, permissions cannot be modified because file owner does not match user\n\t user:\t${USER}\n\t owner:\t${path_user}\n\t path:\t${path}"
         continue
