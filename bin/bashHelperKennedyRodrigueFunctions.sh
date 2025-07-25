@@ -279,12 +279,12 @@ print_footer() {
 # ------------------------------------------------------------------------------
 # get args from idx
 # ------------------------------------------------------------------------------
-root_dir=`get_root_dir kenrod`
-in_path="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
+
 
 get_args_from_idx() {
     local idx=`echo ${1}+1 | bc`
-
+    local root_dir=`get_root_dir kenrod`
+    local in_path="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
     if [ -z ${idx} ]; then
         echo "Usage: get_args_from_idx <idx>"
         exit 1
