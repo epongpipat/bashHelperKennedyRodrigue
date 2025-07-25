@@ -11,6 +11,10 @@ args_order+=("scan")
 args_order+=("task")
 args_order+=("run")
 args_order+=("hemi")
+args_order+=("space")
+args_order+=("seg")
+args_order+=("res")
+args_order+=("label")
 args_order+=("desc")
 args_order+=("airc_id")
 args_order+=("data_ref")
@@ -28,6 +32,10 @@ help[scan]="scan label"
 help[task]="task label"
 help[run]="run label"
 help[hemi]="hemisphere label (L or R)"
+help[space]="space label (e.g., MNI152NLin6Sym)"
+help[seg]="segmentation label"
+help[res]="resolution label"
+help[label]="label for the segmentation"
 help[desc]="description label"
 help[airc_id]="airc id"
 help[data_ref]="reference id"
@@ -138,6 +146,26 @@ parse_args() {
                 fi
                 opts="${opts} --hemi ${hemi}"
                 args_used+=("hemi")
+                shift 2
+                ;;
+            --space)
+                space=$2
+                opts="${opts} --space ${space}"
+                shift 2
+                ;;
+            --seg)
+                seg=$2
+                opts="${opts} --seg ${seg}"
+                shift 2
+                ;;
+            --res)
+                res=$2
+                opts="${opts} --res ${res}"
+                shift 2
+                ;;
+            --label)
+                label=$2
+                opts="${opts} --label ${label}"
                 shift 2
                 ;;
             --desc)
