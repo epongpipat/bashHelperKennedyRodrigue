@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# usage
+# ------------------------------------------------------------------------------
+usage() {
+    cat <<USAGE
+
+    Usage: $0 <study>
+
+    Description:
+
+        Get bids directory based on study, OS, and hostname
+
+    Options:
+
+        <study>
+            directory name. can be one of the following:
+                jlbs|dallas
+                pams
+
+
+        -h, --help
+            show this help message and exit
+
+USAGE
+    # exit 1
+}
+
+# ------------------------------------------------------------------------------
+# parse args
+# ------------------------------------------------------------------------------
+# if no arguments supplied, show usage
+if [ $# -eq 0 ]; then
+    usage
+    exit 1
+fi
+
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+dir_list=(jlbs dallas pams)
+if [[ ! " ${dir_list[@]} " =~ " $1 " ]]; then
+    # echo "error: unknown argument ($1)"
+    usage
+    bash error_msg "unknown study ($1). must be one of the following: ${dir_list[@]}"
+fi
+
+dir=$1
+
+if [[ ${dir} == 'dallas' ]]; then
+    dir='jlbs'
+fi
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+os=`uname`
+code_dir=`dirname $0`
+
+hostname=${HOSTNAME}
+
+if [[ ${hostname} =~ "compute-" || ${hostname} =~ "login-" || ${hostname} =~ 'vdi-' ]]; then
+    hostname=`get_cluster_name`
+fi
+
+if [[ ${os} == 'Linux' ]]; then
+    root_dir=`cat ${code_dir}/bids_dir.csv | grep ${dir} | grep ${os} | grep ${hostname} | awk -F, '{print $4}'`
+elif [[ ${os} == 'Darwin' ]] || [[ ${os} == 'Windows_NT' ]]; then
+    root_dir=`cat ${code_dir}/bids_dir.csv | grep ${dir} | grep ${os} | awk -F, '{print $4}'`
+fi
+root_dir=`eval echo ${root_dir}`
+if [[ -z ${root_dir} ]]; then
+    error_msg "no root_dir found (os: ${os}; HOSTNAME: ${HOSTNAME}, hostname: ${hostname})"
+elif [[ ! -e ${root_dir} ]]; then
+    if [[ ${os} == 'Darwin' ]]; then
+        root_dir=`echo ${root_dir} | sed "s|/Volumes|/Users/${USER}/mnt/cvl|g"`
+    fi
+
+    if [[ ! -e ${root_dir} ]]; then
+        error_msg "file does not exist (${root_dir})"
+    else 
+        echo "${root_dir}"
+    fi
+else
+    echo "${root_dir}"
+fi

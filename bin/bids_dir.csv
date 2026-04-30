@@ -1,0 +1,9 @@
+os,hostname,study,path
+Linux,cvlkrcompute1.utdallas.edu,jlbs,/cvl/kenrod/study-jlbs/sourcedata/bids
+Linux,cvlkrcompute1.utdallas.edu,pams,/cvl/kenrod/study-pams/sourcedata/bids
+Linux,cortex.cvl.utdallas.edu,jlbs,/mfs/cvl/groups/kenrod/study-jlbs/sourcedata/bids
+Linux,cortex.cvl.utdallas.edu,pams,/mfs/cvl/groups/kenrod/study-pams/sourcedata/bids
+Darwin,local,jlbs,/Volumes/kenrod/study-jlbs/sourcedata/bids
+Darwin,local,pams,/Volumes/kenrod/study-pams/sourcedata/bids
+Windows_NT,local,kennjlbsedy,//smb.cvl.utdallas.edu/kenrod/study-jlbs/sourcedata/bids
+Windows_NT,local,pams,//smb.cvl.utdallas.edu/kenrod/study-pams/sourcedata/bids
