@@ -13,7 +13,7 @@ set -e
 study_list=(all jlbs pams)
 
 declare -A wave_list
-wave_list[jlbs]="all 1 2 3"
+wave_list[jlbs]="all 1 2 3 4"
 wave_list[pams]="all"
 
 date_str=`date +%Y-%m-%d`
@@ -58,14 +58,16 @@ slurm_opts[4]="--nodes=1 \
 --time=1-00:00:00 \
 --export=NONE \
 -D ${logs_pwd}"
-
+slurm_opts[5]="--output=jid-%A_jname-%x.log \
+-D ${logs_pwd}"
 declare -a slurm_opts_desc
 # slurm_opts_desc[0]="[none]"
+
 slurm_opts_desc[1]="[default]"
 slurm_opts_desc[2]="[8GB mem]"
 slurm_opts_desc[3]="[1/3*max]"
 slurm_opts_desc[4]="[gpu]\t"
-
+slurm_opts_desc[5]="[log]\t"
 # slurm_opts_desc[4]="[compute-02]"
 
 # slurm_opts+=("custom")
@@ -111,7 +113,7 @@ warning_msg "please choose carefully, options are likely to change"
 echo -e "\npipelines (sorted):"
 for i in ${!in_scripts[@]}; do
     i_str=$((i+1))
-    echo -e "\t${i_str}:\t${in_scripts[$i]}"
+    echo -e "\t${i_str}:\t${in_scripts[$i]} [${i_str}]"
 done
 echo -e "\n[NOTE]:\t\tif you want to add a new pipeline, add it to the pipeline file (path: ${in_paths[preproc]})"
 
@@ -136,7 +138,7 @@ if [[ ${#in_script[@]} -lt 1 ]]; then
 fi
 for i in ${!in_script[@]}; do
     i_str=$((i+1))
-    echo -e "\t${i_str}:\t${in_script[i]}"
+    echo -e "\t${i_str}:\t${in_script[i]} [${i_str}]"
 done
 script_idx_opts=`seq 1 $((${#in_script[@]}))`
 script_idx=$(get_valid_input \

@@ -227,7 +227,7 @@ check_req_args() {
     local missing_args=()
     for arg in "${args[@]}"; do
         if [[ -z ${!arg} ]]; then
-            missing_args+=(${arg})
+            missing_args+=("--${arg}")
         fi
     done
     if [[ ${#missing_args[@]} -gt 0 ]]; then
