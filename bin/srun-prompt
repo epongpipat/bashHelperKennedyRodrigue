@@ -17,39 +17,49 @@ partition_k=$(get_valid_input -p "which partition do you want to run?" -o ${!par
 partition="${partitions[$partition_k]}"
 echo -e "partition:\t${partition}"
 
-
 # nodelist ---------------------------------------------------------------------
+declare -a nodelists_dev
+nodelists_dev[0]="any"
+nodelists_dev[5]="compute-05"
 
-# if [[ ${partition} == 'kenrod' ]]; then
-#     declare -a nodelist
-#     nodelist[0]="compute-02"
-#     nodelist[1]="compute-16"
+declare -a nodelists_kenrod
+nodelists_kenrod[0]="any"
+nodelists_kenrod[2]="compute-02"
+nodelists_kenrod[16]="compute-16"
 
-#     declare -a nodelist_desc
-#     nodelist_desc[0]="[gpu]"
-#     nodelist_desc[1]="[cpu]"
+declare -a nodelists_normal
+nodelists_normal[0]="any"
+nodelists_normal[4]="compute-04"
+nodelists_normal[7]="compute-07"
+nodelists_normal[15]="compute-15"
 
-#     echo -e "\nnodes:"
-#     for i in "${!nodelist[@]}"; do
-#         echo -e "\t${i}:\t${nodelist_desc[$i]}\t${nodelist[$i]}"
-#     done
-#     node_k=$(get_valid_input -p "which node do you want to run?" -o ${!nodelist[@]} -d 1 -e 1)
-#     node="${nodelist[$node_k]}"
-#     echo -e "node:\t${node}"
-# fi
+declare -n nodelists="nodelists_${partition}"
+echo -e "\nnodelists:"
+for i in "${!nodelists[@]}"; do
+    echo -e "\t${i}:\t${nodelists[$i]}"
+done
+nodelist_k=$(get_valid_input -p "which nodelists do you want to run? (default: 0)" -o ${!nodelists[@]} -d 0 -e 1)
+nodelist="${nodelists[$nodelist_k]}"
+echo -e "nodelist:\t${nodelist}"
 
 # opts -------------------------------------------------------------------------
+cmd="srun --partition=${partition}"
+if [[ ${nodelist} != 'any' ]]; then
+    cmd="${cmd} --nodelist=${nodelist}"
+fi
+
+
 declare -a opts
-opts[0]="srun --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=4G --partition=${partition} --pty /bin/bash"
-opts[1]="srun --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=8G --partition=${partition} --pty /bin/bash"
-opts[2]="srun --nodes=1 --ntasks=1 --cpus-per-task=3 --mem=16G --partition=${partition} --pty /bin/bash"
-opts[3]="srun --nodes=1 --ntasks=1 --cpus-per-task=6 --mem=32G --partition=${partition} --pty /bin/bash"
+opts[0]="${cmd} --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=4G --time=0-16:00:00 --pty /bin/bash"
+opts[1]="${cmd} --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=8G --time=0-16:00:00 --pty /bin/bash"
+opts[2]="${cmd} --nodes=1 --ntasks=1 --cpus-per-task=3 --mem=16G --time=0-16:00:00 --pty /bin/bash"
+opts[3]="${cmd} --nodes=1 --ntasks=1 --cpus-per-task=6 --mem=32G --time=0-16:00:00 --pty /bin/bash"
 # opts[4]="srun --nodes=1 --ntasks=1 --cpus-per-task=12 --mem=64G --partition=${partition} --pty /bin/bash"
 
 declare -a opts_desc
 opts_desc[0]="[default]"
 opts_desc[1]="[8GB mem]"
-opts_desc[2]="[1/3*max]"
+opts_desc[2]="[1/4*max]"
 opts_desc[3]="[1/2*max]"
 # opts_desc[4]="[max]\t"
 
