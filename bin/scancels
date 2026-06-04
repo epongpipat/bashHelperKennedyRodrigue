@@ -1,0 +1,50 @@
+#!/bin/bash
+
+start=$1
+end=$2
+
+# ------------------------------------------------------------------------------
+# checks
+# ------------------------------------------------------------------------------
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+    echo "Usage: scancels [job_id_start] [job_id_end]"
+    exit 0
+fi
+
+if [[ $# -ne 2 ]]; then
+    echo "Usage: scancels [job_id_start] [job_id_end]"
+    exit 1
+fi
+
+# ensure job ids are numbers
+if [[ ! ${start} =~ ^[0-9]+$ || ! ${end} =~ ^[0-9]+$ ]]; then
+    echo -e "[ERROR]\tjob ids must be numbers"
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
+# main  
+# ------------------------------------------------------------------------------
+
+# verify cancel
+echo -e "[PROMPT]\tAre you sure you want to cancel jobs from ${start} to ${end}? (y/n)"
+read response
+
+# verify response and while loop to ensure response is 'y' or 'n'
+while [[ ${response} != "y" && ${response} != "n" ]]; do
+    echo -e "[ERROR]\t\tInvalid response. Please enter 'y' or 'n'"
+    echo -e "[PROMPT]\tAre you sure you want to cancel jobs from ${start} to ${end}? (y/n)"
+    read response
+done
+
+# exit if response is 'n'
+if [[ ${response} == "n" ]]; then
+    echo "Exiting"
+    exit 0
+fi
+
+# cancel jobs
+for i in $(seq $start $end); do
+    echo "scancel -u ${USER} $i"
+    scancel $i
+done

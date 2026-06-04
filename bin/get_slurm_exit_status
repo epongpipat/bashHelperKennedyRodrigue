@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------
+# modules
+# ------------------------------------------------------------------------------
+source bashHelperKennedyRodrigueFunctions.sh
+
+# ------------------------------------------------------------------------------
+# args/hdr
+# ------------------------------------------------------------------------------
+# help
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+    echo "Usage: get_slurm_exit_status [job_id_start] [job_id_end]"
+    exit 0
+elif [[ $# -ne 2 ]]; then
+    echo "Usage: get_slurm_exit_status [job_id_start] [job_id_end]"
+    exit 1
+fi
+set -e
+print_header
+start=$1
+end=$2
+
+# ------------------------------------------------------------------------------
+# paths
+# ------------------------------------------------------------------------------
+# date=`date +%Y-%m-%d`
+root_dir=`get_root_dir kenrod`
+out_path_str='${root_dir}/server/logs/${USER}/${date}/exit_status_from-${start}_to-${end}.csv'
+
+# ------------------------------------------------------------------------------
+# checks
+# ------------------------------------------------------------------------------
+# ensure job ids are numbers
+if [[ ! ${start} =~ ^[0-9]+$ || ! ${end} =~ ^[0-9]+$ ]]; then
+    echo "Error: job ids must be numbers"
+    exit 1
+fi
+
+# if [[ ! -d `dirname ${out_path}` ]]; then
+#     mkdir -p `dirname ${out_path}`
+# fi
+
+# ------------------------------------------------------------------------------
+# main
+# ------------------------------------------------------------------------------
+
+job_ids=`seq ${start} ${end} | tr '\n' ',' | sed 's/,$//'`
+# sacct -j ${job_ids} --format="JobID,Start,End,Elapsed,State,JobName%-100" | grep -v batch
+date=`sacct -j ${start} --format="Start" | tail -n 1 | awk -F 'T' '{print $1}'`
+out_path=`eval echo ${out_path_str}`
+echo "job_id,study,sub,ses,airc_id,complete" | tee ${out_path}
+for i in $(seq ${start} ${end}); do
+    status=`sacct -j ${i} --format=JobID,State | grep -v batch | tail -n 1 | awk -F' ' '{print $2}'`
+    if [[ $status == "COMPLETED" ]]; then
+        complete=1
+    else
+        complete=0
+    fi
+    # echo []
+    log_file="${root_dir}/server/logs/${USER}/${date}/jid-${i}_jname-*.log"
+    study=`cat ${log_file} | head -n 20 | grep "study:" | awk -F':' '{print $2}' | sed 's/^[[:space:]]\+//'`
+    sub=`cat ${log_file} | head -n 20 | grep "sub:" | awk -F': ' '{print $2}' | sed 's/^[[:space:]]\+//'`
+    ses=`cat ${log_file} | head -n 20 | grep "ses:" | awk -F': ' '{print $2}' | sed 's/^[[:space:]]\+//'`
+    scan=`cat ${log_file} | head -n 20 | grep "scan:" | awk -F': ' '{print $2}' | sed 's/^[[:space:]]\+//'`
+    airc_id=`cat ${log_file} | head -n 20 | grep "airc_id:" | awk -F': ' '{print $2}' | sed 's/^[[:space:]]\+//'`
+    echo "${i},${study},${sub},${ses},${airc_id},${complete}" | tee -a ${out_path}
+done
+
+# ------------------------------------------------------------------------------
+# end
+# ------------------------------------------------------------------------------
+print_footer
