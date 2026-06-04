@@ -45,11 +45,12 @@ overwrite=0
 print=0
 # Parse command line arguments
 declare -a out_paths
-i=0
+# i=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -c|-cmd)
-            cmd=$2
+            cmd="$2"
+            cmd=$(printf "%s" "$cmd")
             shift 2
             ;;
         -o|--out_path)
@@ -63,7 +64,7 @@ while [[ $# -gt 0 ]]; do
                 error_msg "missing argument for out_path"
                 exit 1
             fi
-            out_paths[$i]=$2
+            out_paths+=("$2")
             i=$((i+1))
             shift 2
             ;;
@@ -87,10 +88,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Check if mandatory command is provided
+if [[ -z "${cmd}" ]]; then
+    usage
+    error_msg "missing required command: -c|--cmd"
+    exit 1
+fi
+
 # ------------------------------------------------------------------------------
 # main
 # ------------------------------------------------------------------------------
-echo -e "\ncommand:\n${cmd}\n"
+cmd_msg "${cmd}"
 if [[ ${print} -eq 1 ]]; then
     warning_msg "printing, but not running command"
     exit 0
@@ -127,11 +135,12 @@ elif [[ ${#out_paths_e[@]} -gt 0 ]] && [[ ${overwrite} -eq 1 ]]; then
         rm -r ${out_paths_e[$i]}
     done
     echo ""
-    eval ${cmd}
+    eval "${cmd}"
 elif [[ ${#out_paths_e[@]} -eq 0 ]]; then
-    eval ${cmd}
+    eval "${cmd}"
 fi
 
+# verify output
 for i in ${!out_paths[@]}; do
     if [[ ! -e ${out_paths[$i]} ]]; then
         bash error_msg "output file not generated (${out_paths[$i]})"
