@@ -9,6 +9,7 @@ args_order+=("sub")
 args_order+=("ses")
 args_order+=("scan")
 args_order+=("task")
+args_order+=("acq")
 args_order+=("run")
 args_order+=("hemi")
 args_order+=("space")
@@ -30,6 +31,7 @@ help[sub]="subject label"
 help[ses]="session/wave label"
 help[scan]="scan label"
 help[task]="task label"
+help[task]="acquisition label"
 help[run]="run label"
 help[hemi]="hemisphere label (L or R)"
 help[space]="space label (e.g., MNI152NLin6Sym)"
@@ -121,6 +123,11 @@ parse_args() {
                     task_alt='Nback'
                 fi
                 opts="${opts} --task ${task}"
+                shift 2
+                ;;
+            --acq)
+                acq=$2
+                opts="${opts} --acq ${acq}"
                 shift 2
                 ;;
             --run)
@@ -378,11 +385,11 @@ get_valid_input() {
 
     # Prompt loop
     valid=0
-    prompt_str="\n[PROMPT]\t${prompt}\n "
+    prompt_str="\n[$(get_datetime)] [PROMPT]\t${prompt}\n "
     read -rp "$(printf "${prompt_str}")" input
     while [ $valid -eq 0 ]; do
         if [[ -z "$input" && $allow_empty -eq 0 ]]; then
-            prompt_str="\n[WARNING]\tinvalid input (valid options: ${opts[*]})\n[PROMPT]\t${prompt}\n "
+            prompt_str="\n[$(get_datetime)] [WARNING]\tinvalid input (valid options: ${opts[*]})\n[PROMPT]\t${prompt}\n "
             read -rp "$(printf "${prompt_str}")" input
             continue
         elif [[ -z "$input" && $allow_empty -eq 1 ]]; then
@@ -397,7 +404,7 @@ get_valid_input() {
             fi
         done
         if [[ $valid -eq 0 ]]; then
-            prompt_str="\n[WARNING]\tinvalid input (valid options: ${opts[*]})\n[PROMPT]\t${prompt}\n "
+            prompt_str="\n[$(get_datetime)] [WARNING]\tinvalid input (valid options: ${opts[*]})\n[$(get_datetime)] [PROMPT]\t${prompt}\n "
             read -rp "$(printf "${prompt_str}")" input
         fi
     done

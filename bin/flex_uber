@@ -212,7 +212,7 @@ echo -e "\ttest-1:\ttest first subject"
 echo -e "\ttest-3:\ttest first three subjects"
 
 # note: can't use get_valid_input because of the comma and semicolon input options
-echo -en "\n[PROMPT]\twhich subjects do you want to run? (enter index number or hit enter to use default; default: all)\n"
+echo -en "\n[$(get_datetime)] [PROMPT]\twhich subjects do you want to run? (enter index number or hit enter to use default; default: all)\n"
 read -r ids_idx
 if [[ -z ${ids_idx} ]]; then
     echo "ids_idx: all"
@@ -238,7 +238,7 @@ echo "ids_idx: ${ids_idx}"
 # ------------------------------------------------------------------------------
 # extra options
 # ------------------------------------------------------------------------------
-echo -en "\n[PROMPT]\textra options? (enter number or hit enter to use default; default: none)\n"
+echo -en "\n[$(get_datetime)] [PROMPT]\textra options? (enter number or hit enter to use default; default: none)\n"
 read -r extra_opts
 if [[ -z ${extra_opts} ]] || [[ ${extra_opts} == 'none' ]]; then
     extra_opts="''"
@@ -277,7 +277,7 @@ if [[ ${pe_idx} -gt 0 ]]; then
         done
         # echo -e "${pe_opts_str}\t1:\t${slurm_default_opts}"
     fi
-    echo -en "\n[PROMPT]\tparallel opts? (enter additional parallel engine arguments, use one of the predefined options, or hit enter to use the default option; default: 1) \n"
+    echo -en "\n[$(get_datetime)] [PROMPT]\tparallel opts? (enter additional parallel engine arguments, use one of the predefined options, or hit enter to use the default option; default: 1) \n"
     read -r pe_opts
 
     if [[ ${pe_idx} -eq 1 ]] && [[ -z ${pe_opts} ]]; then
