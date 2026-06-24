@@ -275,14 +275,17 @@ done
 # ------------------------------------------------------------------------------
 # parallel: 0 (serial)
 # ------------------------------------------------------------------------------
+id_cols_alt_tab=$(echo ${id_cols_alt} | sed 's/,/\t/g')
 if [[ ${parallel} == "0" ]]; then
-    echo -e "\nscript_idx,id_idx,${id_cols_alt}"
+    #echo -e "\nscript_idx,id_idx,${id_cols_alt}"
     for s in ${!scripts[@]}; do
         for i in ${!ids[@]}; do
             id=${ids[$i]}
             s1=`echo ${s} + 1 | bc`
             i1=`echo ${i} + 1 | bc`
-            echo -e "\n${s1},${i1},${ids[$i]}"
+            ids_i1_tab=$(echo ${ids[$i]} | sed 's/,/\t/g')
+            info_msg "script_idx\tid_idx\t${id_cols_alt_tab}"
+            info_msg "${s1}\t${i1}\t${ids_i1_tab}"
             
             # flex opts
             opts_key=(`cat ${in_ids} | head -n 1 | sed 's/,/ /g'`)
@@ -297,7 +300,8 @@ if [[ ${parallel} == "0" ]]; then
                 opts="${opts} ${extra_opts}"
             fi
             cmd="bash ${scripts[${s}]} ${opts}"
-            echo -e "\ncommand:\n${cmd}\n"
+            #echo -e "\ncommand:\n${cmd}\n"
+            cmd_msg "${cmd}"
             if [[ ${print} -eq 0 ]]; then
                 eval ${cmd}
             fi
@@ -359,7 +363,8 @@ if [[ ${parallel} == 'sge' ]]; then
 
             cmd="qsub ${sge_opts} ${scripts[$s]} ${opts}"
         
-            echo -e "command:\n${cmd}"
+            #echo -e "command:\n${cmd}"
+            cmd_msg "${cmd}"
             if [[ ${print} -eq 0 ]]; then
                 eval ${cmd}
             fi
@@ -417,7 +422,8 @@ if [[ ${parallel} == 'slurm' ]]; then
 
             cmd="sbatch ${slurm_opts} ${scripts[$s]} ${opts}"
         
-            echo -e "command:\n${cmd}"
+            #echo -e "command:\n${cmd}"
+            cmd_msg "${cmd}"
             if [[ ${print} -eq 0 ]]; then
                 slurm_sub=`eval ${cmd}`
                 echo ${slurm_sub}
