@@ -22,6 +22,8 @@ args_order+=("data_ref")
 args_order+=("date")
 args_order+=("overwrite")
 args_order+=("print")
+args_order+=("args_description")
+args_order+=("args_req")
 args_order+=("help")
 
 declare -A help
@@ -31,7 +33,7 @@ help[sub]="subject label"
 help[ses]="session/wave label"
 help[scan]="scan label"
 help[task]="task label"
-help[task]="acquisition label"
+help[acq]="acquisition label"
 help[run]="run label"
 help[hemi]="hemisphere label (L or R)"
 help[space]="space label (e.g., MNI152NLin6Sym)"
@@ -44,6 +46,8 @@ help[data_ref]="reference id"
 help[date]="date (YYYYMMDD)"
 help[overwrite]="flag to overwrite output (default: 0/false)"
 help[print]="flag to print command only (does not execute command) (default: 0/false)"
+help[args_description]="description of the script or execution"
+help[args_req]="required arguments for the script"
 help[help]="show this help message and exit"
 
 # ------------------------------------------------------------------------------
@@ -52,7 +56,99 @@ help[help]="show this help message and exit"
 usage() {
     help_msg="usage: $0 [options]"
     help_msg="${help_msg}\n\noptions:"
+    
+    # Normalize args_req to an array for checking
+    local req_array=()
+    if declare -p args_req 2>/dev/null | grep -q 'declare -a'; then
+        req_array=("${args_req[@]}")
+    else
+        req_array=(${args_req})
+    fi
+
+    # Classify keys into required and optional
+    local req_keys=()
+    local opt_keys=()
     for key in "${args_order[@]}"; do
+        local is_req=0
+        for req in "${req_array[@]}"; do
+            if [[ ${req} == "${key}" ]]; then
+                is_req=1
+                break
+            fi
+        done
+        if [[ ${is_req} -eq 1 ]]; then
+            req_keys+=("${key}")
+        else
+            opt_keys+=("${key}")
+        fi
+    done
+
+    # Build the argparse-style usage line
+    local usage_line="usage: $(basename "$0") [-h]"
+    
+    # Optional arguments
+    for key in "${opt_keys[@]}"; do
+        if [[ ${key} == "args_description" || ${key} == "args_req" || ${key} == "help" ]]; then
+            continue
+        fi
+        local key_kebab=$(echo "${key}" | sed 's/_/-/g')
+        local key_upper=$(echo "${key}" | tr '[:lower:]' '[:upper:]')
+        if [[ ${key} == "overwrite" || ${key} == "print" ]]; then
+            usage_line="${usage_line} [--${key_kebab} <0|1>]"
+        else
+            usage_line="${usage_line} [--${key_kebab} ${key_upper}]"
+        fi
+    done
+
+    # Required arguments
+    for key in "${req_keys[@]}"; do
+        if [[ ${key} == "args_description" || ${key} == "args_req" || ${key} == "help" ]]; then
+            continue
+        fi
+        local key_kebab=$(echo "${key}" | sed 's/_/-/g')
+        local key_upper=$(echo "${key}" | tr '[:lower:]' '[:upper:]')
+        if [[ ${key} == "overwrite" || ${key} == "print" ]]; then
+            usage_line="${usage_line} --${key_kebab} <0|1>"
+        else
+            usage_line="${usage_line} --${key_kebab} ${key_upper}"
+        fi
+    done
+
+    # Build the help message starting with the description if present
+    local help_msg=""
+    if [[ -n ${args_description} ]]; then
+        help_msg="description:\n\t${args_description}\n\n"
+    fi
+    help_msg="${help_msg}${usage_line}"
+
+    # Print Required Section if present
+    if [[ ${#req_keys[@]} -gt 0 ]]; then
+        help_msg="${help_msg}\n\nrequired options:"
+        for key in "${req_keys[@]}"; do
+            if [[ ${key} == "args_description" || ${key} == "args_req" ]]; then
+                continue
+            fi
+            if [[ ${key} =~ '_' ]]; then
+                key_alt=`echo ${key} | sed 's/_/-/g'`
+                help_msg="${help_msg}\n\n\t--${key}, --${key_alt} <${key}>"
+            elif [[ ${key} == "overwrite" ]] || [[ ${key} == "print" ]]; then
+                help_msg="${help_msg}\n\n\t--${key} <0|1>"
+            else
+                help_msg="${help_msg}\n\n\t--${key} <${key}>"
+            fi
+            help_msg="${help_msg}\n\t\t${help[${key}]}"
+        done
+
+        help_msg="${help_msg}\n\noptional options:"
+    else
+        help_msg="${help_msg}\n\noptions:"
+    fi
+
+    # Print Optional Section
+    for key in "${opt_keys[@]}"; do
+        if [[ ${key} == "args_description" || ${key} == "args_req" ]]; then
+            continue
+        fi
         if [[ ${key} =~ '_' ]]; then
             key_alt=`echo ${key} | sed 's/_/-/g'`
             help_msg="${help_msg}\n\n\t--${key}, --${key_alt} <${key}>"
@@ -63,13 +159,24 @@ usage() {
         fi
         help_msg="${help_msg}\n\t\t${help[${key}]}"
     done
+
     echo -e "${help_msg}\n"
 }
 
-# ------------------------------------------------------------------------------
-# read command line arguments
-# ------------------------------------------------------------------------------
 parse_args() {
+    # Pre-scan for args_req and args_description so they are available to usage() if --help is called
+    local i
+    for ((i=1; i<=$#; i++)); do
+        local next_idx=$((i+1))
+        if [[ ${!i} == "--args-req" || ${!i} == "--req-args" ]]; then
+            unset args_req
+            args_req=${!next_idx}
+        elif [[ ${!i} == "--args-description" || ${!i} == "--script-description" || ${!i} == "--function-description" ]]; then
+            unset args_description
+            args_description=${!next_idx}
+        fi
+    done
+
     # if no arguments supplied, show usage
     if [ $# -eq 0 ]; then
         usage
@@ -84,145 +191,106 @@ parse_args() {
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --lab)
-                lab=$2
-                lab_uc=`echo ${lab} | tr '[:lower:]' '[:upper:]'`
-                opts="${opts} --lab ${lab}"
-                shift 2
-                ;;
-            --study)
-                study=$2
-                study_uc=`echo ${study} | tr '[:lower:]' '[:upper:]'`
-                opts="${opts} --study ${study}"
-                shift 2
-                ;;
-            --sub)
-                sub=$2
-                sub_uc=`echo ${sub} | tr '[:lower:]' '[:upper:]'`
-                opts="${opts} --sub ${sub}"
-                shift 2
-                ;;
-            --ses)
-                if [[ ${2} =~ ^[0-9]+$ ]]; then
-                    wave=$2
-                    ses=`printf "%02d" ${wave}`
-                else 
-                    ses=$2
-                fi
-                opts="${opts} --ses ${ses}"
-                shift 2
-                ;;
-            --scan)
-                scan=$2
-                opts="${opts} --scan ${scan}"
-                shift 2
-                ;;
-            --task)
-                task=$2
-                if [[ ${task} == 'nback' ]]; then
-                    task_alt='Nback'
-                fi
-                opts="${opts} --task ${task}"
-                shift 2
-                ;;
-            --acq)
-                acq=$2
-                opts="${opts} --acq ${acq}"
-                shift 2
-                ;;
-            --run)
-                run=$2
-                opts="${opts} --run ${run}"
-                shift 2
-                ;;
-            --hemi)
-                hemi=$2
-                if [[ ${hemi} != 'L' ]] && [[ ${hemi} != 'R' ]]; then
-                    error_msg "hemi must be L or R"
-                fi
-                if [[ ${hemi} == 'L' ]]; then
-                    hemisphere='left'
-                    Hemisphere='Left'
-                    hemi_alt='lh'
-                    hemi_opposite='R'
-                elif [[ ${hemi} == 'R' ]]; then
-                    hemisphere='right'
-                    Hemisphere='Right'
-                    hemi_alt='rh'
-                    hemi_opposite='L'
-                fi
-                opts="${opts} --hemi ${hemi}"
-                args_used+=("hemi")
-                shift 2
-                ;;
-            --space)
-                space=$2
-                opts="${opts} --space ${space}"
-                shift 2
-                ;;
-            --seg)
-                seg=$2
-                opts="${opts} --seg ${seg}"
-                shift 2
-                ;;
-            --res)
-                res=$2
-                opts="${opts} --res ${res}"
-                shift 2
-                ;;
-            --label)
-                label=$2
-                opts="${opts} --label ${label}"
-                shift 2
-                ;;
-            --desc)
-                desc=$2
-                opts="${opts} --desc ${desc}"
-                shift 2
-                ;;
-            --airc_id|--airc-id)
-                airc_id=$2
-                airc_id_number=`echo ${airc_id} | sed 's/3tb//g' | sed 's/7t//g'`
-                airc_id_uc=`echo ${airc_id} | tr '[:lower:]' '[:upper:]'`
-                opts="${opts} --airc_id ${airc_id}"
-                shift 2
-                ;;
-            --data_ref|--data-ref)
-                data_ref=$2
-                opts="${opts} --data_ref ${data_ref}"
-                shift 2
-                ;;
-            --date)
-                date=$2
-                if [[ ! $date =~ ^[0-9]{8}$ ]]; then
-                    error_msg "date must be in the format YYYYMMDD"
-                fi
-                if [[ $date -gt $(date +%Y%m%d) ]]; then
-                    error_msg "date must be today's date or a past date"
-                fi
-                date_mmddyyyy="${date:4:4}${date:0:4}"
-                opts="${opts} --date ${date}"
-                shift 2
-                ;;
-            --overwrite)
-                overwrite=$2
-                if [[ ${overwrite} != "0" && ${overwrite} != "1" ]]; then
-                    error_msg "overwrite must be 0 or 1"
-                fi
-                opts="${opts} --overwrite ${overwrite}"
-                shift 2
-                ;;
-            --print)
-                print=$2
-                if [[ ${print} != "0" && ${print} != "1" ]]; then
-                    error_msg "print must be 0 or 1"
-                fi
-                opts="${opts} --print ${print}"
-                shift 2
-                ;;
             -h|--help)
                 usage
                 exit 0
+                ;;
+            --*)
+                # Strip leading --
+                local key=${1#--}
+                # Convert dashes to underscores (e.g., data-ref -> data_ref)
+                local var_name=${key//-/_}
+                
+                # Normalize aliases
+                if [[ ${var_name} == "script_description" || ${var_name} == "function_description" ]]; then
+                    var_name="args_description"
+                elif [[ ${var_name} == "req_args" ]]; then
+                    var_name="args_req"
+                fi
+                
+                # Check if var_name is in args_order
+                if [[ " ${args_order[@]} " =~ " ${var_name} " ]]; then
+                    local val=$2
+                    
+                    # Store the value
+                    eval "${var_name}=\$val"
+                    
+                    # Special validation/processing logic
+                    case "${var_name}" in
+                        lab)
+                            lab_uc=$(echo "${val}" | tr '[:lower:]' '[:upper:]')
+                            ;;
+                        study)
+                            study_uc=$(echo "${val}" | tr '[:lower:]' '[:upper:]')
+                            ;;
+                        sub)
+                            sub_uc=$(echo "${val}" | tr '[:lower:]' '[:upper:]')
+                            ;;
+                        ses)
+                            if [[ ${val} =~ ^[0-9]+$ ]]; then
+                                wave=${val}
+                                ses=$(printf "%02d" "${wave}")
+                            else 
+                                ses=${val}
+                            fi
+                            # Update the evaluated variable in case we formatted it
+                            eval "${var_name}=\$ses"
+                            ;;
+                        task)
+                            if [[ ${val} == 'nback' ]]; then
+                                task_alt='Nback'
+                            fi
+                            ;;
+                        hemi)
+                            if [[ ${val} != 'L' ]] && [[ ${val} != 'R' ]]; then
+                                error_msg "hemi must be L or R"
+                            fi
+                            if [[ ${val} == 'L' ]]; then
+                                hemisphere='left'
+                                Hemisphere='Left'
+                                hemi_alt='lh'
+                                hemi_opposite='R'
+                            elif [[ ${val} == 'R' ]]; then
+                                hemisphere='right'
+                                Hemisphere='Right'
+                                hemi_alt='rh'
+                                hemi_opposite='L'
+                            fi
+                            args_used+=("hemi")
+                            ;;
+                        airc_id)
+                            airc_id_number=$(echo "${val}" | sed 's/3tb//g' | sed 's/7t//g')
+                            airc_id_uc=$(echo "${val}" | tr '[:lower:]' '[:upper:]')
+                            ;;
+                        date)
+                            if [[ ! $val =~ ^[0-9]{8}$ ]]; then
+                                error_msg "date must be in the format YYYYMMDD"
+                            fi
+                            if [[ $val -gt $(date +%Y%m%d) ]]; then
+                                error_msg "date must be today's date or a past date"
+                            fi
+                            date_mmddyyyy="${val:4:4}${val:0:4}"
+                            ;;
+                        overwrite)
+                            if [[ ${val} != "0" && ${val} != "1" ]]; then
+                                error_msg "overwrite must be 0 or 1"
+                            fi
+                            ;;
+                        print)
+                            if [[ ${val} != "0" && ${val} != "1" ]]; then
+                                error_msg "print must be 0 or 1"
+                            fi
+                            ;;
+                    esac
+                    
+                    # Fetch resolved/potentially updated value
+                    eval "local resolved_val=\${${var_name}}"
+                    opts="${opts} --${var_name} ${resolved_val}"
+                    shift 2
+                else
+                    usage
+                    error_msg "unknown argument: $1"
+                fi
                 ;;
             *)
                 usage
@@ -230,6 +298,17 @@ parse_args() {
                 ;;
         esac
     done
+
+    # Normalize args_req to an array for checking
+    local req_array=()
+    if declare -p args_req 2>/dev/null | grep -q 'declare -a'; then
+        req_array=("${args_req[@]}")
+    else
+        req_array=(${args_req})
+    fi
+
+    # Check required arguments automatically if args_req is defined
+    check_req_args "${req_array[@]}"
 }
 
 # ------------------------------------------------------------------------------
@@ -262,7 +341,7 @@ print_header() {
         if [[ -z ${!args_order[$i]} ]]; then
             continue
         fi
-        printf "%-10s\t%s\n" ${args_order[$i]}: ${!args_order[$i]}
+        printf "%-10s\t%s\n" "${args_order[$i]}:" "${!args_order[$i]}"
     done
     echo -e "\n--------------------------------------------------------------------------------\n"
     SECONDS=0
@@ -282,7 +361,7 @@ print_footer() {
         if [[ -z ${!args_order[$i]} ]]; then
             continue
         fi
-        printf "%-10s\t%s\n" ${args_order[$i]}: ${!args_order[$i]}
+        printf "%-10s\t%s\n" "${args_order[$i]}:" "${!args_order[$i]}"
     done
     echo ""
     echo -e "duration:\t`get_duration ${SECONDS}`"
