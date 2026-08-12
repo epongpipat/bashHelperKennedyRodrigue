@@ -206,11 +206,17 @@ parse_args() {
                 ;;
             --overwrite)
                 overwrite=$2
+                if [[ ${overwrite} != "0" && ${overwrite} != "1" ]]; then
+                    error_msg "overwrite must be 0 or 1"
+                fi
                 opts="${opts} --overwrite ${overwrite}"
                 shift 2
                 ;;
             --print)
                 print=$2
+                if [[ ${print} != "0" && ${print} != "1" ]]; then
+                    error_msg "print must be 0 or 1"
+                fi
                 opts="${opts} --print ${print}"
                 shift 2
                 ;;
@@ -247,7 +253,7 @@ check_req_args() {
 # ------------------------------------------------------------------------------
 print_header() {
     echo ""
-    echo -e "date:\t\t$(date)"
+    echo -e "date:\t\t$(get_datetime)"
     echo -e "script:\t\t${0}"
     echo -e "user:\t\t${USER}"
     echo -e "host:\t\t${HOSTNAME}"
@@ -267,7 +273,7 @@ print_header() {
 # ------------------------------------------------------------------------------
 print_footer() {
     echo -e "\n--------------------------------------------------------------------------------\n"
-    echo -e "date:\t\t$(date)"
+    echo -e "date:\t\t$(get_datetime)"
     echo -e "script:\t\t${0}"
     echo -e "user:\t\t${USER}"
     echo -e "host:\t\t${HOSTNAME}"
@@ -410,4 +416,51 @@ get_valid_input() {
     done
 
     echo "$input"  # Return the valid input
+}
+
+# ------------------------------------------------------------------------------
+# module load all
+# ------------------------------------------------------------------------------
+module_load_all() {
+    # usage -----
+    usage_module_load_all() {
+        echo -e "\n\tusage:\t\tmodule_load_all <module_file>"
+        echo -e "\n\toptions:\t\t"
+        echo -e "\t\t\t<module_file> - Path to the file containing module names to load, one per line."
+        echo -e ""  
+    }
+
+    # checks -----
+    if [[ $# -ne 1 ]]; then
+        usage_module_load_all
+        return 0
+    fi
+
+    if [[ ! -f $1 ]]; then
+        error_msg "module file does not exist ($1)"
+    fi
+
+    # main -----
+    local module_file=$1
+    local modules=()
+    local module
+
+    while read -r module; do
+        # skip blank lines and comments
+        [[ -z "$module" || "$module" =~ ^# ]] && continue
+        modules+=("$module")
+    done < "$module_file"
+
+    # 2. Check if all modules exist
+    for module in "${modules[@]}"; do
+        if ! module avail "$module" 2>&1 | grep -q "$module"; then
+            error_msg "module not found ($module). run 'module avail' for list of available modules."
+        fi
+    done
+
+    # 3. Load all modules
+    for module in "${modules[@]}"; do
+        info_msg "loading module: $module"
+        module load "$module"
+    done
 }
