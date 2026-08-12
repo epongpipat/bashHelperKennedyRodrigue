@@ -13,6 +13,7 @@ slurm_opts+=("--nodes=1 --ntasks=1 --cpus-per-task=6 --mem=32G --partition=kenro
 slurm_opts+=("--nodes=1 --ntasks=1 --cpus-per-task=9 --mem=48G --partition=kenrod --output=jid-%A_jname-%x.log --time=1-00:00:00 --export=NONE -D ${log_dir}")
 slurm_opts+=("--nodes=1 --ntasks=1 --cpus-per-task=12 --mem=64G --partition=kenrod --output=jid-%A_jname-%x.log --time=1-00:00:00 --export=NONE -D ${log_dir}")
 slurm_opts+=("--nodes=1 --ntasks=1 --cpus-per-task=1 --mem=4G --partition=kenrod --nodelist=compute-02 --output=jid-%A_jname-%x.log --time=1-00:00:00 --export=NONE -D ${log_dir}")
+slurm_opts+=("--nodes=1 --ntasks=1 --cpus-per-task=6 --mem=32G --partition=kenrod --nodelist=compute-02 --output=jid-%A_jname-%x.log --time=1-00:00:00 --export=NONE -D ${log_dir}")
 slurm_opts+=("--nodes=1 --ntasks=1 --cpus-per-task=12 --mem=64G --partition=kenrod --nodelist=compute-02 --output=jid-%A_jname-%x.log --time=1-00:00:00 --export=NONE -D ${log_dir}")
 
 declare -a slurm_desc
@@ -24,7 +25,8 @@ slurm_desc+=("0.50*max")
 slurm_desc+=("0.75*max")
 slurm_desc+=("1.00*max")
 slurm_desc+=("gpu-min")
-slurm_desc+=("gpu-max")
+slurm_desc+=("0.50*gpu-max")
+slurm_desc+=("1.00*gpu-max")
 
 # ------------------------------------------------------------------------------
 # usage
