@@ -6,7 +6,7 @@
 usage() {
     cat <<USAGE
     
-    Usage: $0 <path>
+    Usage: $0 <path> [path2 ...]
 
         path can be a file or directory
 
@@ -19,7 +19,7 @@ usage() {
             - group:        if group ownership is kenrod, then changes to kenrodbasic or kenrodusers depending on group membership
 
 USAGE
-exit 1
+    exit 1
 }
 
 # ------------------------------------------------------------------------------
@@ -29,46 +29,79 @@ if [[ $# -lt 1 ]]; then
     usage
 fi
 
-paths=${@}
+# ------------------------------------------------------------------------------
+# functions
+# ------------------------------------------------------------------------------
+OS=$(uname)
+
+# Determine the target group based on current user group membership
+group_list=$(groups)
+max_grp=""
+if [[ " ${group_list} " =~ " kenrodusers " ]]; then
+    max_grp="kenrodusers"
+elif [[ " ${group_list} " =~ " kenrodbasic " ]]; then
+    max_grp="kenrodbasic"
+fi
+
+# Helper function to get the owner of a file/directory (OS agnostic)
+get_owner() {
+    if [[ ${OS} == "Darwin" ]]; then
+        stat -f '%Su' "$1"
+    else
+        stat -c '%U' "$1"
+    fi
+}
+
+# Helper function to get the group of a file/directory (OS agnostic)
+get_group() {
+    if [[ ${OS} == "Darwin" ]]; then
+        stat -f '%Sg' "$1"
+    else
+        stat -c '%G' "$1"
+    fi
+}
+
+# Helper function to recursively strip ACLs (OS agnostic)
+strip_acl() {
+    local target="$1"
+    if [[ ${OS} == "Darwin" ]]; then
+        chmod -R -N "${target}" 2>/dev/null
+    elif [[ ${OS} == "Linux" ]]; then
+        setfacl -R -b "${target}" 2>/dev/null
+    fi
+}
 
 # ------------------------------------------------------------------------------
 # main
 # ------------------------------------------------------------------------------
-for path in ${paths[@]}; do
+# Iterate through each argument directly to safely support spaces in paths
+for path in "$@"; do
 
     if [[ ! -e ${path} ]]; then
         warning_msg "skipping, path does not exist\n\t path:\t${path}"
         continue
     fi
 
-    path_user=`ls -ld ${path} | awk '{print $3}'`
-
-    if [[ ${path_user} != ${USER} ]]; then
-        warning_msg "skipping, permissions cannot be modified because file owner does not match user\n\t user:\t${USER}\n\t owner:\t${path_user}\n\t path:\t${path}"
+    # Check ownership using native Bash test first (fast and process-free)
+    if [[ ! -O ${path} ]]; then
+        path_owner=$(get_owner "${path}")
+        warning_msg "skipping, permissions cannot be modified because file owner does not match user\n\t user:\t${USER}\n\t owner:\t${path_owner}\n\t path:\t${path}"
         continue
     fi
 
-    find ${path} -type d -exec chmod 2775 {} \;
-    find ${path} -type f -exec chmod 0774 {} \;
+    # Batch change permissions (using '+' instead of '\;') to process in batches.
+    # Restrict to user's files to prevent permission errors on subfiles owned by others.
+    find "${path}" -user "${USER}" -type d -exec chmod 2775 {} +
+    find "${path}" -user "${USER}" -type f -exec chmod 0774 {} +
 
-    # recursively strip ACL permissions
-    os=`uname`
-    if [[ ${os} == "Darwin" ]]; then
-        chmod -R -N ${path} 2>/dev/null
-    elif [[ ${os} == "Linux" ]]; then
-        setfacl -R -b ${path} 2>/dev/null
-    fi
+    # Recursively strip ACL permissions
+    strip_acl "${path}"
 
-    grp=`ls -ld ${path} | awk '{print $4}'`
-
-    group_list=`groups`
-    if [[ ${group_list} =~ "kenrodusers" ]]; then
-        max_grp="kenrodusers"
-    elif [[ ${group_list} =~ "kenrodbasic" ]]; then
-        max_grp="kenrodbasic"
-    fi
-
-    if [[ ${grp} == "kenrod" ]]; then
-        chgrp -R ${max_grp} ${path}
+    # Update group if top-level path group is kenrod and a target group is found
+    if [[ -n ${max_grp} ]]; then
+        grp=$(get_group "${path}")
+        if [[ ${grp} == "kenrod" ]]; then
+            find "${path}" -user "${USER}" -exec chgrp "${max_grp}" {} +
+        fi
     fi
 done
