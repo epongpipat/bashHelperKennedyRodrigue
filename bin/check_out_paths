@@ -1,0 +1,68 @@
+#!/bin/bash
+
+set -e
+
+# ------------------------------------------------------------------------------
+# usage
+# ------------------------------------------------------------------------------
+usage() {
+    cat <<USAGE
+
+    Usage: $0 <out_paths>
+
+    Description:
+
+        Check if out paths exist. out_paths can be a single path or an array of paths
+
+USAGE
+    exit 1
+}
+
+# ------------------------------------------------------------------------------
+# parse args
+# ------------------------------------------------------------------------------
+# if no arguments supplied, show usage
+if [ $# -eq 0 ]; then
+    usage
+fi
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    cat <<USAGE
+
+    Usage: $0 <out_paths>
+
+    Description:
+
+        Check if out paths exist. out_paths can be a single path or an array of paths
+
+USAGE
+    exit 0
+fi
+
+out_paths=("$@")
+
+declare -A out_paths_e
+declare -A out_paths_ne
+for i in "${!out_paths[@]}"; do
+    if [[ -e "${out_paths[$i]}" ]] && [[ -s "${out_paths[$i]}" ]]; then
+        out_paths_e[$i]="${out_paths[$i]}"
+    elif [[ -e "${out_paths[$i]}" ]] && [[ ! -s "${out_paths[$i]}" ]]; then
+        warning_msg "deleting, file already exists, but file is empty (${out_paths[$i]})"
+        rm -r "${out_paths[$i]}"
+        out_paths_ne[$i]="${out_paths[$i]}"
+    elif [[ ! -e "${out_paths[$i]}" ]]; then
+        out_paths_ne[$i]="${out_paths[$i]}"
+    fi
+done
+
+if [[ ${#out_paths_ne[@]} -gt 0 ]]; then
+    missing_str=""
+    for i in "${!out_paths_ne[@]}"; do
+        missing_str="${missing_str}\n\t${i}: ${out_paths_ne[$i]}"
+    done
+    error_msg "\toutput file(s) do not exist or are empty:${missing_str}"
+fi
+
+for i in "${!out_paths_e[@]}"; do
+    ensure_permissions "${out_paths_e[$i]}"
+done

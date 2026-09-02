@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# help
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "usage: is_numeric <string>" >&2
+    exit 0
+fi
+
+# checks
+if [ -z "$1" ]; then
+    echo "0"
+    exit 0
+fi
+
+# is_numeric
+if [[ $1 =~ ^[0-9]+$ ]]; then
+    echo "1"
+else
+    echo "0"
+fi

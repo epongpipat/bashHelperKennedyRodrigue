@@ -22,8 +22,6 @@ args_order+=("data_ref")
 args_order+=("date")
 args_order+=("overwrite")
 args_order+=("print")
-args_order+=("args_description")
-args_order+=("args_req")
 args_order+=("help")
 
 declare -A help
@@ -46,17 +44,12 @@ help[data_ref]="reference id"
 help[date]="date (YYYYMMDD)"
 help[overwrite]="flag to overwrite output (default: 0/false)"
 help[print]="flag to print command only (does not execute command) (default: 0/false)"
-help[args_description]="description of the script or execution"
-help[args_req]="required arguments for the script"
 help[help]="show this help message and exit"
 
 # ------------------------------------------------------------------------------
 # usage function
 # ------------------------------------------------------------------------------
 usage() {
-    help_msg="usage: $0 [options]"
-    help_msg="${help_msg}\n\noptions:"
-    
     # Normalize args_req to an array for checking
     local req_array=()
     if declare -p args_req 2>/dev/null | grep -q 'declare -a'; then
@@ -88,7 +81,7 @@ usage() {
     
     # Optional arguments
     for key in "${opt_keys[@]}"; do
-        if [[ ${key} == "args_description" || ${key} == "args_req" || ${key} == "help" ]]; then
+        if [[ ${key} == "help" ]]; then
             continue
         fi
         local key_kebab=$(echo "${key}" | sed 's/_/-/g')
@@ -102,7 +95,7 @@ usage() {
 
     # Required arguments
     for key in "${req_keys[@]}"; do
-        if [[ ${key} == "args_description" || ${key} == "args_req" || ${key} == "help" ]]; then
+        if [[ ${key} == "help" ]]; then
             continue
         fi
         local key_kebab=$(echo "${key}" | sed 's/_/-/g')
@@ -125,9 +118,6 @@ usage() {
     if [[ ${#req_keys[@]} -gt 0 ]]; then
         help_msg="${help_msg}\n\nrequired options:"
         for key in "${req_keys[@]}"; do
-            if [[ ${key} == "args_description" || ${key} == "args_req" ]]; then
-                continue
-            fi
             if [[ ${key} =~ '_' ]]; then
                 key_alt=`echo ${key} | sed 's/_/-/g'`
                 help_msg="${help_msg}\n\n\t--${key}, --${key_alt} <${key}>"
@@ -146,9 +136,6 @@ usage() {
 
     # Print Optional Section
     for key in "${opt_keys[@]}"; do
-        if [[ ${key} == "args_description" || ${key} == "args_req" ]]; then
-            continue
-        fi
         if [[ ${key} =~ '_' ]]; then
             key_alt=`echo ${key} | sed 's/_/-/g'`
             help_msg="${help_msg}\n\n\t--${key}, --${key_alt} <${key}>"
@@ -167,13 +154,24 @@ parse_args() {
     # Pre-scan for args_req and args_description so they are available to usage() if --help is called
     local i
     for ((i=1; i<=$#; i++)); do
-        local next_idx=$((i+1))
-        if [[ ${!i} == "--args-req" || ${!i} == "--req-args" ]]; then
+        if [[ ${!i} == "--args-req" ]]; then
             unset args_req
-            args_req=${!next_idx}
-        elif [[ ${!i} == "--args-description" || ${!i} == "--script-description" || ${!i} == "--function-description" ]]; then
+            local j=$((i+1))
+            local req_list=()
+            while [[ ${j} -le $# ]] && [[ ${!j} != --* ]]; do
+                req_list+=("${!j}")
+                j=$((j+1))
+            done
+            args_req="${req_list[*]}"
+        elif [[ ${!i} == "--args-description" ]]; then
             unset args_description
-            args_description=${!next_idx}
+            local j=$((i+1))
+            local desc_list=()
+            while [[ ${j} -le $# ]] && [[ ${!j} != --* ]]; do
+                desc_list+=("${!j}")
+                j=$((j+1))
+            done
+            args_description="${desc_list[*]}"
         fi
     done
 
@@ -195,21 +193,39 @@ parse_args() {
                 usage
                 exit 0
                 ;;
+            --args-req)
+                shift
+                while [[ $# -gt 0 ]] && [[ $1 != --* ]]; do
+                    shift
+                done
+                ;;
+            --args-description)
+                shift
+                while [[ $# -gt 0 ]] && [[ $1 != --* ]]; do
+                    shift
+                done
+                ;;
             --*)
                 # Strip leading --
                 local key=${1#--}
                 # Convert dashes to underscores (e.g., data-ref -> data_ref)
                 local var_name=${key//-/_}
                 
-                # Normalize aliases
-                if [[ ${var_name} == "script_description" || ${var_name} == "function_description" ]]; then
-                    var_name="args_description"
-                elif [[ ${var_name} == "req_args" ]]; then
-                    var_name="args_req"
-                fi
-                
                 # Check if var_name is in args_order
-                if [[ " ${args_order[@]} " =~ " ${var_name} " ]]; then
+                local is_valid=0
+                local order_key
+                for order_key in "${args_order[@]}"; do
+                    if [[ ${order_key} == "${var_name}" ]]; then
+                        is_valid=1
+                        break
+                    fi
+                done
+                if [[ ${is_valid} -eq 1 ]]; then
+                    # Check if value is missing (no arguments left or next starts with --)
+                    if [[ $# -lt 2 ]] || [[ $2 == --* ]]; then
+                        usage
+                        error_msg "option $1 requires an argument"
+                    fi
                     local val=$2
                     
                     # Store the value
@@ -426,11 +442,11 @@ get_valid_input() {
           ;;
         -o)
           opts=()
-          while [[ $2 != -* ]] && [[ $# -gt 0 ]]; do
-              opts+=("$2")
+          shift
+          while [[ $# -gt 0 ]] && [[ $1 != -* ]]; do
+              opts+=("$1")
               shift
           done
-          shift
           ;;
         -d)
           default=$2

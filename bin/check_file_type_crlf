@@ -4,15 +4,21 @@ set -e
 
 in_path=$1
 
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo -e "\ndescription: check if line ending is CRLF (Windows)"
+    echo -e "\nusage: check_file_type_crlf <in_path>\n"
+    exit 0
+fi
+
 if [[ -z ${in_path} ]]; then
     echo -e "\ndescription: check if line ending is CRLF (Windows)"
     echo -e "\nusage: check_file_type_crlf <in_path>\n"
     error_msg "in_path is empty"
 fi
 
-check_in_paths ${in_path}
+check_in_paths "${in_path}"
 
-n_lines=(`cat -A ${in_path} | grep '\\^M\\$' | wc -l`)
+n_lines=$(grep -c $'\r' "${in_path}" 2>/dev/null || true)
 if [[ ${n_lines} -gt 0 ]]; then
-    warning_msg "file is likely a windows file (rather than a unix file) as it contains lines ending with ^M$\n\t path: ${in_path}"
+    warning_msg "file is likely a windows file (rather than a unix file) as it contains lines ending with CRLF (^M)\n\t path: ${in_path}"
 fi
