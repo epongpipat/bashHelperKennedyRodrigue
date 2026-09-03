@@ -26,6 +26,7 @@ Options:
                                           visits: filters long format visits CSV (7 columns)
                                           bids:   filters long format BIDS CSV (3 columns: study, sub, ses)
         --idx-only <0|1>              Return 1-based row indices only (default: 0)
+        --path-only                   Return the path to the resolved CSV file and exit
         -h, --help                    Display this help message
 
     Common Filters (BIDS & Visits):
@@ -171,6 +172,10 @@ while [[ $# -gt 0 ]]; do
       vars="${vars} idx_only"
       shift 2
       ;;
+    --path-only|--path_only|--file-only|--file_only)
+      path_only=1
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -199,6 +204,11 @@ if [[ ${format} == "bids" ]]; then
   in_ids="${root_dir}/software/scripts/eep170030/ids_study-all_format-long-bids.csv"
 else
   in_ids="${root_dir}/software/scripts/eep170030/ids_study-all_format-long-visits.csv"
+fi
+
+if [[ ${path_only} -eq 1 ]]; then
+  echo "${in_ids}"
+  exit 0
 fi
 
 # ------------------------------------------------------------------------------

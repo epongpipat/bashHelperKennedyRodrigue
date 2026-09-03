@@ -1,8 +1,13 @@
 #!/bin/bash
 
 date_now="$(date +'%Y-%m-%d')"
-root_dir=`get_root_dir kenrod`
+if command -v get_root_dir >/dev/null 2>&1; then
+    root_dir=`get_root_dir kenrod`
+elif [[ -x "$(dirname "${BASH_SOURCE[0]}")/get_root_dir" ]]; then
+    root_dir=`"$(dirname "${BASH_SOURCE[0]}")/get_root_dir" kenrod`
+fi
 log_dir="${root_dir}/server/logs/${USER}/${date_now}"
+logs_pwd="${log_dir}"
 
 declare -a slurm_opts
 slurm_opts+=("-D ${log_dir}")
@@ -28,6 +33,9 @@ slurm_desc+=("gpu-min")
 slurm_desc+=("0.50*gpu-max")
 slurm_desc+=("1.00*gpu-max")
 
+declare -a slurm_opts_desc
+slurm_opts_desc=("${slurm_desc[@]}")
+
 # ------------------------------------------------------------------------------
 # usage
 # ------------------------------------------------------------------------------
@@ -42,24 +50,26 @@ usage() {
 # ------------------------------------------------------------------------------
 # parse args
 # ------------------------------------------------------------------------------
-# if no arguments supplied, show usage
-if [ $# -eq 0 ]; then
-    usage
-    exit 1
-fi
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # if no arguments supplied, show usage
+    if [ $# -eq 0 ]; then
+        usage
+        exit 1
+    fi
 
-if [[ $1 == "-h" || $1 == "--help" ]]; then
-    usage
-    exit 0
-fi
+    if [[ $1 == "-h" || $1 == "--help" ]]; then
+        usage
+        exit 0
+    fi
 
-if [[ $1 -gt ${#slurm_opts[@]} ]]; then
-    usage
-    echo -e "[ERROR]\tnot a valid option ($1)"
-    exit 1
-fi
+    if [[ -z ${slurm_opts[$1]} ]]; then
+        usage
+        echo -e "[ERROR]\tnot a valid option ($1)"
+        exit 1
+    fi
 
-if [[ ! -d ${log_dir} ]]; then
-    mkdir ${log_dir}
+    if [[ ! -d ${log_dir} ]]; then
+        mkdir -p ${log_dir}
+    fi
+    echo ${slurm_opts[$1]}
 fi
-echo ${slurm_opts[$1]}

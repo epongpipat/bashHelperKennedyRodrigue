@@ -1,0 +1,176 @@
+#!/bin/bash
+
+set -e
+
+# ------------------------------------------------------------------------------
+# modules & helpers
+# ------------------------------------------------------------------------------
+bin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ ":$PATH:" != *":$bin_dir:"* ]]; then
+    export PATH="${bin_dir}:${PATH}"
+fi
+
+if ! command -v get_valid_input &>/dev/null; then
+    if [[ -f "${bin_dir}/bashHelperKennedyRodrigueFunctions.sh" ]]; then
+        source "${bin_dir}/bashHelperKennedyRodrigueFunctions.sh"
+    elif command -v module &>/dev/null; then
+        module load bashHelperKennedyRodrigue 2>/dev/null || true
+        source bashHelperKennedyRodrigueFunctions.sh 2>/dev/null || true
+    fi
+fi
+
+# ------------------------------------------------------------------------------
+# study (via filter_ids)
+# ------------------------------------------------------------------------------
+study_list=("all" $(filter_ids --study all --format bids | awk -F, '{print $2}' | sort -u))
+
+echo -e "\nstudies:"
+for i in ${!study_list[@]}; do
+    echo -e "\t${i}:\t${study_list[i]}"
+done
+study_idx_opts=`seq 0 $((${#study_list[@]}-1))`
+study_idx=$(get_valid_input \
+-p "which study do you want to run? (enter index number or hit enter to use default; default: 0 [all])" \
+-o ${study_idx_opts} \
+-e 1 \
+-d 0)
+study=${study_list[$study_idx]}
+echo -e "study[${study_idx}]:\t${study}"
+
+# ------------------------------------------------------------------------------
+# format (via filter_ids)
+# ------------------------------------------------------------------------------
+format_list=(bids visits)
+
+echo -e "\nformats:"
+for i in ${!format_list[@]}; do
+    echo -e "\t${i}:\t${format_list[i]}"
+done
+format_idx_opts=`seq 0 $((${#format_list[@]}-1))`
+format_idx=$(get_valid_input \
+-p "which format do you want to run? (enter index number or hit enter to use default; default: 0 [bids])" \
+-o ${format_idx_opts} \
+-e 1 \
+-d 0)
+format=${format_list[$format_idx]}
+echo -e "format[${format_idx}]:\t${format}"
+
+declare -A in_paths
+in_paths[ids]=$(filter_ids --format ${format} --path-only)
+
+# ------------------------------------------------------------------------------
+# session (via filter_ids)
+# ------------------------------------------------------------------------------
+if [[ ${format} == "bids" ]]; then
+    raw_ses=($(filter_ids --study ${study} --format bids | awk -F, '{print $4}' | sort -u -n))
+else
+    raw_ses=($(filter_ids --study ${study} --format visits | awk -F, '{print $5}' | sort -u -n))
+fi
+
+if [[ ${#raw_ses[@]} -lt 1 ]]; then
+    error_msg "no sessions found for ${study}"
+fi
+
+ses_list=("all" "${raw_ses[@]}")
+
+echo -e "\nsessions:"
+for i in ${!ses_list[@]}; do
+    echo -e "\t${i}:\t${ses_list[$i]}"
+done
+ses_idx_opts=`seq 0 $((${#ses_list[@]}-1))`
+ses_idx=$(get_valid_input \
+-p "which session do you want to run? (enter index number or hit enter to use default; default: 0 [all])" \
+-o ${ses_idx_opts} \
+-e 1 \
+-d 0)
+
+echo "session[${ses_idx}]: ${ses_list[$ses_idx]}"
+ses=${ses_list[$ses_idx]}
+if [[ ${ses} =~ ^[0-9]$ ]]; then
+    ses=`printf "%02d" ${ses}`
+fi
+
+# ------------------------------------------------------------------------------
+# visit_type (via filter_ids)
+# ------------------------------------------------------------------------------
+if [[ ${format} != "bids" ]]; then
+    raw_types=($(filter_ids --study ${study} --ses ${ses} --format visits | awk -F, '{print $6}' | sort -u))
+
+    if [[ ${#raw_types[@]} -gt 1 ]]; then
+        visit_type_opts=("all" "${raw_types[@]}")
+        echo -e "\nvisit types:"
+        for i in ${!visit_type_opts[@]}; do
+            echo -e "\t${i}:\t${visit_type_opts[i]}"
+        done
+        visit_type_idx_opts=`seq 0 $((${#visit_type_opts[@]}-1))`
+        visit_type_idx=$(get_valid_input \
+        -p "which visit type do you want to run? (enter index number or hit enter to use default; default: 0 [all])" \
+        -o ${visit_type_idx_opts} \
+        -e 1 \
+        -d 0)
+        visit_type=${visit_type_opts[$visit_type_idx]}
+    elif [[ ${#raw_types[@]} -eq 1 ]]; then
+        visit_type=${raw_types[0]}
+    else
+        visit_type="all"
+    fi
+    echo -e "visit_type:\t${visit_type}"
+else
+    visit_type=""
+fi
+
+# ------------------------------------------------------------------------------
+# ids using filter
+# ------------------------------------------------------------------------------
+filter_args="--study ${study} --ses ${ses} --format ${format}"
+if [[ ${format} != "bids" ]] && [[ -n ${visit_type} ]]; then
+    filter_args="${filter_args} --visit-type ${visit_type}"
+fi
+
+in_ids=(`filter_ids ${filter_args}`)
+if [[ ${#in_ids[@]} -lt 1 ]]; then
+    error_msg "no ids found for ${study} (ses: ${ses}, format: ${format}, visit_type: ${visit_type})"
+fi
+echo ""
+ids_idx_opts=()
+for i in ${!in_ids[@]}; do
+    i_str=`echo ${in_ids[$i]} | awk -F, '{print $1}'`
+    ids_idx_opts+=(${i_str})
+    echo -e "\t${i_str}:\t${in_ids[i]}"
+done
+echo -e "\tall:\tall"
+echo -e "\ttest-1:\ttest first subject"
+echo -e "\ttest-3:\ttest first three subjects"
+
+# note: can't use get_valid_input because of the comma and semicolon input options
+echo -en "\n[$(get_datetime)] [PROMPT]\twhich subjects do you want to run? (enter index number or hit enter to use default; default: all)\n"
+read -r ids_idx
+if [[ -z ${ids_idx} ]] || [[ ${ids_idx} == 'all' ]]; then
+    echo "ids_idx: all"
+    ids_idx=`filter_ids ${filter_args} --idx-only 1`
+elif [[ ${ids_idx} == 'test-1' ]]; then
+    echo "ids_idx: test-1"
+    ids_idx=`filter_ids ${filter_args} --idx-only 1`
+    ids_idx=(`echo ${ids_idx} | tr ',' ' '`)
+    ids_idx=${ids_idx[0]}
+elif [[ ${ids_idx} == 'test-3' ]]; then
+    echo "ids_idx: test-3"
+    ids_idx=`filter_ids ${filter_args} --idx-only 1`
+    ids_idx=(`echo ${ids_idx} | tr ',' ' '`)
+    ids_idx=(${ids_idx[@]:0:3})
+    ids_idx=$(IFS=,; echo "${ids_idx[*]}")
+fi
+echo "ids_idx: ${ids_idx}"
+
+# ------------------------------------------------------------------------------
+# standalone summary output
+# ------------------------------------------------------------------------------
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    echo -e "\n[SUMMARY]"
+    echo -e "study:\t\t${study}"
+    echo -e "format:\t\t${format}"
+    echo -e "session:\t${ses}"
+    [[ -n ${visit_type} ]] && echo -e "visit_type:\t${visit_type}"
+    echo -e "ids_file:\t${in_paths[ids]}"
+    echo -e "ids_idx:\t${ids_idx}"
+fi
