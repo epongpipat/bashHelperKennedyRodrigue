@@ -40,9 +40,6 @@ root_dir=`get_root_dir kenrod`
 
 declare -A in_paths
 in_paths[preproc]="${root_dir}/software/scripts/eep170030/script_sets.txt"
-in_paths[ids_visits]="${root_dir}/software/scripts/eep170030/ids_study-all_format-long-visits.csv"
-in_paths[ids_bids]="${root_dir}/software/scripts/eep170030/ids_study-all_format-long-bids.csv"
-
 in_scripts=(`cat ${in_paths[preproc]} | sort`)
 
 # ------------------------------------------------------------------------------
