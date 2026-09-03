@@ -11,10 +11,21 @@ source bashHelperKennedyRodrigueFunctions.sh
 # ------------------------------------------------------------------------------
 set -e
 study_list=(all jlbs pams)
+format_list=(visits bids)
 
 declare -A wave_list
 wave_list[jlbs]="all 1 2 3 4"
 wave_list[pams]="all"
+
+declare -A visit_type_list
+visit_type_list[jlbs-all]="all 3T 7T"
+visit_type_list[jlbs-1]="all 3T"
+visit_type_list[jlbs-2]="all 3T"
+visit_type_list[jlbs-3]="all 3T"
+visit_type_list[jlbs-4]="all 3T 7T"
+visit_type_list[pams-all]="all 3T PET"
+visit_type_list[pams-1]="all 3T PET"
+
 
 date_str=`date +%Y-%m-%d`
 logs_pwd="${root_dir}/server/logs/${USER}/${date_str}"
@@ -24,63 +35,70 @@ declare -a slurm_opts
 slurm_opts[1]="--nodes=1 \
 --ntasks=1 \
 --cpus-per-task=1 \
---mem=4G \
---partition=kenrod \
---output=jid-%A_jname-%x.log \
---time=1-00:00:00 \
---export=NONE \
--D ${logs_pwd}"
+--mem=8G \
+--time=24:00:00 \
+--output=${logs_pwd}/jid-%j_jname-%x.log \
+--job-name=flex"
+
 slurm_opts[2]="--nodes=1 \
 --ntasks=1 \
 --cpus-per-task=1 \
 --mem=8G \
+--time=24:00:00 \
+--output=${logs_pwd}/jid-%j_jname-%x.log \
 --partition=kenrod \
---output=jid-%A_jname-%x.log \
---time=1-00:00:00 \
---export=NONE \
--D ${logs_pwd}"
+--job-name=flex"
+
 slurm_opts[3]="--nodes=1 \
 --ntasks=1 \
---cpus-per-task=3 \
---mem=16G \
---partition=kenrod \
---output=jid-%A_jname-%x.log \
---time=1-00:00:00 \
---export=NONE \
--D ${logs_pwd}"
+--cpus-per-task=1 \
+--mem=8G \
+--time=24:00:00 \
+--output=${logs_pwd}/jid-%j_jname-%x.log \
+--partition=dev \
+--job-name=flex"
+
 slurm_opts[4]="--nodes=1 \
 --ntasks=1 \
 --cpus-per-task=1 \
---mem=4G \
+--mem=16G \
+--time=24:00:00 \
+--output=${logs_pwd}/jid-%j_jname-%x.log \
+--job-name=flex"
+
+slurm_opts[5]="--nodes=1 \
+--ntasks=1 \
+--cpus-per-task=1 \
+--mem=16G \
+--time=24:00:00 \
+--output=${logs_pwd}/jid-%j_jname-%x.log \
 --partition=kenrod \
---nodelist=compute-02 \
---output=jid-%A_jname-%x.log \
---time=1-00:00:00 \
---export=NONE \
--D ${logs_pwd}"
-slurm_opts[5]="--output=jid-%A_jname-%x.log \
--D ${logs_pwd}"
+--job-name=flex"
+
+slurm_opts[6]="--nodes=1 \
+--ntasks=1 \
+--cpus-per-task=1 \
+--mem=16G \
+--time=24:00:00 \
+--output=${logs_pwd}/jid-%j_jname-%x.log \
+--partition=dev \
+--job-name=flex"
+
 declare -a slurm_opts_desc
-# slurm_opts_desc[0]="[none]"
-
-slurm_opts_desc[1]="[default]"
-slurm_opts_desc[2]="[8GB mem]"
-slurm_opts_desc[3]="[1/3*max]"
-slurm_opts_desc[4]="[gpu]\t"
-slurm_opts_desc[5]="[log]\t"
-# slurm_opts_desc[4]="[compute-02]"
-
-# slurm_opts+=("custom")
+slurm_opts_desc[1]="general (default)"
+slurm_opts_desc[2]="general (partition: kenrod)"
+slurm_opts_desc[3]="general (partition: dev)"
+slurm_opts_desc[4]="high-memory"
+slurm_opts_desc[5]="high-memory (partition: kenrod)"
+slurm_opts_desc[6]="high-memory (partition: dev)"
 
 # slurm_default_opts="--nodes=1 \
 # --ntasks=1 \
 # --cpus-per-task=1 \
-# --mem=4G \
-# --partition=kenrod \
-# --output=jid-%A_jname-%x.log \
-# --time=0-08:00:00 \
-# --export=NONE \
-# -D ${logs_pwd}"
+# --mem-per-cpu=8G \
+# --time=24:00:00 \
+# --output=${logs_pwd}/jid-%j_jname-%x.log \
+# --job-name=flex"
 
 # sge_default_opts="-V \
 # -S /bin/bash \
@@ -97,7 +115,8 @@ root_dir=`get_root_dir kenrod`
 
 declare -A in_paths
 in_paths[preproc]="${root_dir}/software/scripts/eep170030/script_sets.txt"
-in_paths[ids]="${root_dir}/software/scripts/eep170030/ids_long-format_study-all.csv"
+in_paths[ids_visits]="${root_dir}/software/scripts/eep170030/ids_study-all_format-long-visits.csv"
+in_paths[ids_bids]="${root_dir}/software/scripts/eep170030/ids_study-all_format-long-bids.csv"
 
 in_scripts=(`cat ${in_paths[preproc]} | sort`)
 
@@ -108,12 +127,10 @@ in_scripts=(`cat ${in_paths[preproc]} | sort`)
 # ------------------------------------------------------------------------------
 # pipelines
 # ------------------------------------------------------------------------------
-echo ""
-warning_msg "please choose carefully, options are likely to change"
-echo -e "\npipelines (sorted):"
+echo -e "\npipelines:"
 for i in ${!in_scripts[@]}; do
-    i_str=$((i+1))
-    echo -e "\t${i_str}:\t${in_scripts[$i]} [${i_str}]"
+    scripts_idx1=$((i+1))
+    echo -e "\t${scripts_idx1}:\t${in_scripts[i]}"
 done
 echo -e "\n[NOTE]:\t\tif you want to add a new pipeline, add it to the pipeline file (path: ${in_paths[preproc]})"
 
@@ -167,6 +184,27 @@ study=${study_list[$study_idx]}
 echo -e "study[${study_idx}]:\t${study}"
 
 # ------------------------------------------------------------------------------
+# format
+# ------------------------------------------------------------------------------
+echo -e "\nformats:"
+for i in ${!format_list[@]}; do
+    echo -e "\t${i}:\t${format_list[i]}"
+done
+format_idx_opts=`seq 0 $((${#format_list[@]}-1))`
+format_idx=$(get_valid_input \
+-p "which format do you want to run? (enter index number or hit enter to use default; default: 0 [visits])" \
+-o ${format_idx_opts} \
+-e 1 \
+-d 0)
+format=${format_list[$format_idx]}
+echo -e "format[${format_idx}]:\t${format}"
+
+in_paths[ids]="${in_paths[ids_${format}]}"
+if [[ -z ${in_paths[ids]} ]]; then
+    in_paths[ids]="${in_paths[ids_visits]}"
+fi
+
+# ------------------------------------------------------------------------------
 # session
 # ------------------------------------------------------------------------------
 echo -e "\nsessions:"
@@ -194,11 +232,63 @@ if [[ ${ses} =~ ^[0-9]$ ]]; then
 fi
 
 # ------------------------------------------------------------------------------
+# visit_type
+# ------------------------------------------------------------------------------
+if [[ ${format} != "bids" ]]; then
+    ses_key=${ses#0}
+    ses_key=${ses_key:-all}
+    key="${study}-${ses_key}"
+    visit_type_opts=(`echo ${visit_type_list[${key}]}`)
+
+    if [[ ${#visit_type_opts[@]} -lt 1 ]]; then
+        if [[ ${study} == "all" ]]; then
+            visit_type_opts=("all" $(echo ${visit_type_list[jlbs-all]} ${visit_type_list[pams-all]} | tr ' ' '\n' | grep -v '^all$' | sort -u))
+        else
+            visit_type_opts=(`echo ${visit_type_list[${study}-all]}`)
+        fi
+    fi
+
+    # Fallback to dynamic extraction via filter_ids if still empty
+    if [[ ${#visit_type_opts[@]} -lt 1 ]]; then
+        raw_types=($(filter_ids --study ${study} --ses ${ses} --format visits | awk -F, '{print $NF}' | grep -v '^all$' | grep -v '^$' | sort -u))
+        if [[ ${#raw_types[@]} -gt 0 ]]; then
+            visit_type_opts=("all" "${raw_types[@]}")
+        fi
+    fi
+
+    if [[ ${#visit_type_opts[@]} -gt 1 ]]; then
+        echo -e "\nvisit types:"
+        for i in ${!visit_type_opts[@]}; do
+            echo -e "\t${i}:\t${visit_type_opts[i]}"
+        done
+        visit_type_idx_opts=`seq 0 $((${#visit_type_opts[@]}-1))`
+        visit_type_idx=$(get_valid_input \
+        -p "which visit type do you want to run? (enter index number or hit enter to use default; default: 0 [all])" \
+        -o ${visit_type_idx_opts} \
+        -e 1 \
+        -d 0)
+        visit_type=${visit_type_opts[$visit_type_idx]}
+    elif [[ ${#visit_type_opts[@]} -eq 1 ]]; then
+        visit_type=${visit_type_opts[0]}
+    else
+        visit_type="all"
+    fi
+    echo -e "visit_type:\t${visit_type}"
+else
+    visit_type=""
+fi
+
+# ------------------------------------------------------------------------------
 # ids using filter
 # ------------------------------------------------------------------------------
-in_ids=(`filter_ids --study ${study} --ses ${ses}`)
+filter_args="--study ${study} --ses ${ses} --format ${format}"
+if [[ ${format} != "bids" ]] && [[ -n ${visit_type} ]]; then
+    filter_args="${filter_args} --visit-type ${visit_type}"
+fi
+
+in_ids=(`filter_ids ${filter_args}`)
 if [[ ${#in_ids[@]} -lt 1 ]]; then
-    error_msg "no ids found for ${study}"
+    error_msg "no ids found for ${study} (ses: ${ses}, format: ${format}, visit_type: ${visit_type})"
 fi
 echo ""
 ids_idx_opts=()
@@ -214,24 +304,20 @@ echo -e "\ttest-3:\ttest first three subjects"
 # note: can't use get_valid_input because of the comma and semicolon input options
 echo -en "\n[$(get_datetime)] [PROMPT]\twhich subjects do you want to run? (enter index number or hit enter to use default; default: all)\n"
 read -r ids_idx
-if [[ -z ${ids_idx} ]]; then
+if [[ -z ${ids_idx} ]] || [[ ${ids_idx} == 'all' ]]; then
     echo "ids_idx: all"
-    ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
-fi
-
-if [[ ${ids_idx} == 'all' ]]; then
-    echo "ids_idx: all"
-    ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
+    ids_idx=`filter_ids ${filter_args} --idx-only 1`
 elif [[ ${ids_idx} == 'test-1' ]]; then
     echo "ids_idx: test-1"
-    ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
+    ids_idx=`filter_ids ${filter_args} --idx-only 1`
     ids_idx=(`echo ${ids_idx} | tr ',' ' '`)
     ids_idx=${ids_idx[0]}
 elif [[ ${ids_idx} == 'test-3' ]]; then
     echo "ids_idx: test-3"
-    ids_idx=`filter_ids --study ${study} --ses ${ses} --idx-only 1`
+    ids_idx=`filter_ids ${filter_args} --idx-only 1`
     ids_idx=(`echo ${ids_idx} | tr ',' ' '`)
-    ids_idx="${ids_idx[0]},${ids_idx[1]},${ids_idx[2]}"
+    ids_idx=(${ids_idx[@]:0:3})
+    ids_idx=$(IFS=,; echo "${ids_idx[*]}")
 fi
 echo "ids_idx: ${ids_idx}"
 
