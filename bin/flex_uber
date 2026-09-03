@@ -11,7 +11,7 @@ source bashHelperKennedyRodrigueFunctions.sh
 # ------------------------------------------------------------------------------
 set -e
 study_list=(all jlbs pams)
-format_list=(visits bids)
+format_list=(bids visits)
 
 declare -A wave_list
 wave_list[jlbs]="all 1 2 3 4"
@@ -192,7 +192,7 @@ for i in ${!format_list[@]}; do
 done
 format_idx_opts=`seq 0 $((${#format_list[@]}-1))`
 format_idx=$(get_valid_input \
--p "which format do you want to run? (enter index number or hit enter to use default; default: 0 [visits])" \
+-p "which format do you want to run? (enter index number or hit enter to use default; default: 0 [bids])" \
 -o ${format_idx_opts} \
 -e 1 \
 -d 0)
